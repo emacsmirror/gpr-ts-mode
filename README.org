@@ -2,7 +2,7 @@
 #+AUTHOR: Troy Brown
 #+LANGUAGE: en
 #+OPTIONS: toc:nil ':t
-#+EXPORT_FILE_NAME: docs/gpr-ts-mode.texi
+#+EXPORT_FILE_NAME: doc/gpr-ts-mode.texi
 #+TEXINFO_DIR_CATEGORY: Emacs
 #+TEXINFO_DIR_TITLE: GPR Tree-Sitter Mode: (gpr-ts-mode)
 #+TEXINFO_DIR_DESC: GNAT Project Major Mode using Tree-Sitter

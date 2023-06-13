@@ -1,6 +1,6 @@
 \input texinfo    @c -*- texinfo -*-
 @c %**start of header
-@setfilename docs/gpr-ts-mode.info
+@setfilename doc/gpr-ts-mode.info
 @settitle GNAT Project Major Mode using Tree-Sitter
 @documentencoding UTF-8
 @documentlanguage en
