@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.5.0
+;; Version: 0.5.1
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29"))
@@ -501,11 +501,19 @@ Return nil if there is no name or if NODE is not a defun node."
              (pcase gpr-ts-mode-grammar-install
                ('auto t)
                ('prompt
-                (y-or-n-p
-                 (format
-                  (concat "Tree-sitter grammar for GPR is missing.  "
-                          "Install it from %s? ")
-                  (car (alist-get 'gpr treesit-language-source-alist)))))
+                ;; Use `read-key' instead of `read-from-minibuffer' as
+                ;; this is less intrusive.  The later will start
+                ;; `minibuffer-mode' which impacts buffer local
+                ;; variables, especially font lock, preventing proper
+                ;; mode initialization and results in improper
+                ;; fontification of the buffer immediately after
+                ;; installing the grammar.
+                (let ((y-or-n-p-use-read-key t))
+                  (y-or-n-p
+                   (format
+                    (concat "Tree-sitter grammar for GPR is missing.  "
+                            "Install it from %s? ")
+                    (car (alist-get 'gpr treesit-language-source-alist))))))
                (_ nil)))
     (message "Installing the tree-sitter grammar for GPR")
     (treesit-install-language-grammar 'gpr))
