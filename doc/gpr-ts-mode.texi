@@ -45,6 +45,7 @@ package.  The two are not compatible with each other.
 * Indentation::
 * Navigation / Imenu::
 * Troubleshooting::
+* Example Configuration::
 * Keystroke Index::
 * Variable Index::
 
@@ -53,6 +54,7 @@ package.  The two are not compatible with each other.
 
 Installation
 
+* From the MELPA Package Archive::
 * From the Git Repository::
 
 Troubleshooting
@@ -103,12 +105,50 @@ be found on your system:
 @node Installation
 @chapter Installation
 
-This section will be expanded to cover additional installation methods
-in the future.
+There are multiple ways in which a package can be installed in Emacs.
+The most convenient way is to use a package archive, however
+installation directly from the git repository is also possible.  In
+addition, there are multiple third party package managers available,
+but installation instructions in this section will focus only on the
+built-in package manager (i.e., @samp{package.el}).  It is assumed that
+power-users will not need direction as to how to use other package
+managers.
+
+In addition to package management, it is also common practice to
+perform package configuration.  There are also multiple third party
+packages for managing your package configuration, however @samp{use-package}
+is now built-in to Emacs.  Refer to the example configuration section
+for ideas on how to utilize @samp{use-package} to setup your own personal
+configuration.
 
 @menu
+* From the MELPA Package Archive::
 * From the Git Repository::
 @end menu
+
+@node From the MELPA Package Archive
+@section From the MELPA Package Archive
+
+This package can be installed from the MELPA package archive using the
+Emacs built-in package manager (i.e., @samp{package.el}).  MELPA is not
+configured in the package manager by default, but the following can be
+used to configure the use of the MELPA archive.  Refer to @uref{https://melpa.org/#/getting-started, Getting
+Started} for additional details on configuring and using the MELPA
+package archive.
+
+@lisp
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+@end lisp
+
+Once configured as above, instruct the package manager to refresh the
+available packages and to perform the installation, as follows:
+
+@itemize
+@item
+@samp{M-x package-refresh-contents RET}
+@item
+@samp{M-x package-install RET gpr-ts-mode RET}
+@end itemize
 
 @node From the Git Repository
 @section From the Git Repository
@@ -321,6 +361,46 @@ setting:
 @lisp
 (with-eval-after-load 'org-src
   (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts)))
+@end lisp
+
+@node Example Configuration
+@chapter Example Configuration
+
+The following is an example configuration using @samp{use-package} to manage
+this configuration.  It assumes that @samp{package.el} is your package
+manager.  This checks to make sure tree-sitter support is enabled in
+Emacs before attempting to install/configure the package, thus your
+configuration will remain compatible with versions of Emacs which
+don't yet support tree-sitter, and will not install and configure this
+package in its absence.  Additionally, this also includes installation
+and configuration of recommended supporting packages and modes.
+
+@lisp
+(when (and (fboundp 'treesit-available-p)
+           (treesit-available-p))
+  (use-package gpr-ts-mode
+    :ensure t
+    :defer t ; autoload updates `auto-mode-alist'
+    :init
+    ;; Configure source blocks for Org Mode.
+    (with-eval-after-load 'org-src
+      (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts)))))
+
+;; Configure Electric Pair
+
+(use-package elec-pair
+  :ensure nil ; built-in
+  :hook (gpr-ts-mode . electric-pair-local-mode))
+
+;; Configure snippets
+
+(use-package gpr-yasnippets
+  :ensure t
+  :defer t) ; autoload hooks into yasnippet
+
+(use-package yasnippet
+  :ensure t
+  :hook (gpr-ts-mode . yas-minor-mode-on))
 @end lisp
 
 @node Keystroke Index
