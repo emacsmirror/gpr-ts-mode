@@ -34,6 +34,7 @@
 
 ;;; Code:
 
+(require 'lisp-mnt)
 (require 'treesit)
 (eval-when-compile (require 'rx))
 
@@ -45,13 +46,19 @@
 
 (defgroup gpr-ts nil
   "Major mode for GNAT Project files, using Tree-Sitter."
-  :group 'languages)
+  :group 'languages
+  :link '(emacs-library-link :tag "Source" "gpr-ts-mode.el")
+  :link `(url-link :tag "Website"
+                   ,(lm-website (locate-library "gpr-ts-mode.el")))
+  :link '(custom-manual "(gpr-ts-mode)Top")
+  :prefix "gpr-ts-mode-")
 
 (defcustom gpr-ts-mode-indent-offset 3
   "Indentation of statements."
   :type 'integer
   :safe #'integerp
   :group 'gpr-ts
+  :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
 
 (defcustom gpr-ts-mode-indent-when-offset gpr-ts-mode-indent-offset
@@ -59,6 +66,7 @@
   :type 'integer
   :safe #'integerp
   :group 'gpr-ts
+  :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
 
 (defcustom gpr-ts-mode-indent-broken-offset (- gpr-ts-mode-indent-offset 1)
@@ -66,6 +74,7 @@
   :type 'integer
   :safe #'integerp
   :group 'gpr-ts
+  :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
 
 (defcustom gpr-ts-mode-indent-exp-item-offset gpr-ts-mode-indent-broken-offset
@@ -73,6 +82,7 @@
   :type 'integer
   :safe #'integerp
   :group 'gpr-ts
+  :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
 
 (defcustom gpr-ts-mode-grammar "https://github.com/brownts/tree-sitter-gpr"
@@ -88,6 +98,7 @@ specified.  See `treesit-language-source-alist' for full details."
                        (choice :tag "C Compiler" (const :tag "Default" nil) string)
                        (choice :tag "C++ Compiler" (const :tag "Default" nil) string)))
   :group 'gpr-ts
+  :link '(custom-manual :tag "Grammar Installation" "(gpr-ts-mode)Grammar Installation")
   :package-version "0.5.0")
 
 (defcustom gpr-ts-mode-grammar-install 'prompt
@@ -96,6 +107,7 @@ specified.  See `treesit-language-source-alist' for full details."
                  (const :tag "Prompt to Install" prompt)
                  (const :tag "Do not install" nil))
   :group 'gpr-ts
+  :link '(custom-manual :tag "Grammar Installation" "(gpr-ts-mode)Grammar Installation")
   :package-version "0.5.0")
 
 (defvar gpr-ts-mode-syntax-table
