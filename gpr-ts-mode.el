@@ -1,4 +1,4 @@
-;;; gpr-ts-mode.el --- Tree-sitter support for GNAT project  -*- lexical-binding: t; -*-
+;;; gpr-ts-mode.el --- Major mode for GNAT project files using Tree-Sitter  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Troy Brown
 
@@ -28,8 +28,9 @@
 
 ;; This package provides GNAT Project syntax highlighting, indentation
 ;; and navigation using Tree-Sitter.  To use the `gpr-ts-mode' major
-;; mode you will need to make sure you have installed the appropriate
-;; grammar.
+;; mode you will need the appropriate grammar installed.  By default,
+;; on mode startup if the grammar is not detected, you will be
+;; prompted to automatically install it.
 
 ;;; Code:
 
