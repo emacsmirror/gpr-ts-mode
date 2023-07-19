@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.5.1
+;; Version: 0.5.2
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29"))
@@ -77,7 +77,7 @@
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
 
-(defcustom gpr-ts-mode-indent-exp-item-offset gpr-ts-mode-indent-broken-offset
+(defcustom gpr-ts-mode-indent-exp-item-offset (- gpr-ts-mode-indent-offset 1)
   "Indentation for the continuation of an expression."
   :type 'integer
   :safe #'integerp
@@ -122,6 +122,42 @@ specified.  See `treesit-language-source-alist' for full details."
     (modify-syntax-entry ?\n ">"    table)
     table)
   "Syntax table for `gpr-ts-mode'.")
+
+(defun gpr-ts-mode--indent-recompute (symbol newval operation where)
+  "Recompute indentation variables when SYMBOL is changed.
+
+SYMBOL is expected to be `gpr-ts-mode-indent-offset', and
+OPERATION is queried to check that it is a `set' operation (as
+defined by `add-variable-watcher'), otherwise nothing is updated.
+Assuming the global value has not been updated by the user, the
+indentation variables are updated using the NEWVAL of SYMBOL and
+made buffer-local WHERE indicates a buffer-local modification of
+SYMBOL, else the default value is updated instead."
+  (when (and (eq symbol 'gpr-ts-mode-indent-offset)
+             (eq operation 'set))
+    (dolist (indent-symbol '(gpr-ts-mode-indent-when-offset
+                             gpr-ts-mode-indent-broken-offset
+                             gpr-ts-mode-indent-exp-item-offset))
+      (let* ((valspec (or (custom-variable-theme-value indent-symbol)
+                          (get indent-symbol 'standard-value)))
+             (cur-custom-value (eval (car valspec)))
+             ;; This routine is invoked before SYMBOL is updated to
+             ;; NEWVAL so we need to bind it to the new value so the
+             ;; other indentation variables are evaluated using the
+             ;; updated value.
+             (gpr-ts-mode-indent-offset newval)
+             (new-custom-value (eval (car valspec))))
+        ;; Only update if not globally modified by the user outside of
+        ;; the customization system (e.g., via `set-default'), or the
+        ;; symbol is already buffer local.
+        (when (or (eql cur-custom-value (default-value indent-symbol))
+                  (and where (buffer-local-boundp indent-symbol where)))
+          (if where
+              (with-current-buffer where
+                (set (make-local-variable indent-symbol) new-custom-value))
+            (set-default indent-symbol new-custom-value)))))))
+
+(add-variable-watcher 'gpr-ts-mode-indent-offset #'gpr-ts-mode--indent-recompute)
 
 (defun gpr-ts-mode--anchor-first-sibling-matching (type)
   "Position of first sibling of node whose type matches TYPE."
