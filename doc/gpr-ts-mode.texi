@@ -172,19 +172,15 @@ With the default configuration, the first time gpr-ts-mode is loaded
 download, build and install the grammar library.  The following
 settings provide control over this activity.
 
-@vindex gpr-ts-mode-grammar
-@table @asis
-@item @code{gpr-ts-mode-grammar} (default: @uref{https://github.com/brownts/tree-sitter-gpr})
-Location
-of the tree-sitter GPR language grammar to be used by gpr-ts-mode.
-@end table
-@vindex gpr-ts-mode-grammar-install
-@table @asis
-@item @code{gpr-ts-mode-grammar-install} (default: @code{prompt})
-Controls the level of
-automation in installing the grammar library (automatic, prompt first,
-etc).
-@end table
+@defopt gpr-ts-mode-grammar
+Location of the tree-sitter GPR language grammar to be used by
+gpr-ts-mode.
+@end defopt
+
+@defopt gpr-ts-mode-grammar-install
+Controls the level of automation in installing the grammar library
+(automatic, prompt first, etc).
+@end defopt
 
 In order to build the library, you will need to have a C compiler
 installed.  Refer to the Emacs documentation surrounding
@@ -250,31 +246,24 @@ construct spanning multiple lines (i.e., broken indent).  The
 following configurations can be used to customize these indentation
 levels to match your own style.
 
-@vindex gpr-ts-mode-indent-offset
-@table @asis
-@item @code{gpr-ts-mode-indent-offset} (default: 3)
-Indentation used for
-structural visualization
-@end table
-@vindex gpr-ts-mode-indent-when-offset
-@table @asis
-@item @code{gpr-ts-mode-indent-when-offset} (default: 3)
-Indentation for case
-items and comments, relative to a case construction.
-@end table
-@vindex gpr-ts-mode-indent-broken-offset
-@table @asis
-@item @code{gpr-ts-mode-indent-broken-offset} (default: 2)
-Continuation
-indentation when item does not completely reside on a single line.
-@end table
-@vindex gpr-ts-mode-indent-exp-item-offset
-@table @asis
-@item @code{gpr-ts-mode-indent-exp-item-offset} (default: 2)
-Continuation
-indentation for partial expressions (i.e., terms, concatenation,
-etc).
-@end table
+@defopt gpr-ts-mode-indent-offset
+Indentation used for structural visualization
+@end defopt
+
+@defopt gpr-ts-mode-indent-when-offset
+Indentation for case items and comments, relative to a case
+construction.
+@end defopt
+
+@defopt gpr-ts-mode-indent-broken-offset
+Continuation indentation when item does not completely reside on a
+single line.
+@end defopt
+
+@defopt gpr-ts-mode-indent-exp-item-offset
+Continuation indentation for partial expressions (i.e., terms,
+concatenation, etc).
+@end defopt
 
 It should be noted that the settings above are defined in terms of
 each other, so that by customizing the standard indentation offset
@@ -321,14 +310,15 @@ instead.  This repurposing of function to project/package is also
 extended to @samp{which-function-mode} support and will show the current
 project and package in the mode line, when enabled.
 
+@table @asis
+@item @kbd{C-M-a} (@code{treesit-beginning-of-defun})
 @kindex C-M-a
-@table @asis
-@item @samp{C-M-a}
+@findex treesit-beginning-of-defun
 Move backward to beginning of package or project
-@end table
+
+@item @kbd{C-M-e} (@code{treesit-end-of-defun})
 @kindex C-M-e
-@table @asis
-@item @samp{C-M-e}
+@findex treesit-end-of-defun
 Move forward to next end of package or project
 @end table
 

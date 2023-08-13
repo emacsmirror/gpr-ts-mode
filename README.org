@@ -112,13 +112,13 @@ With the default configuration, the first time gpr-ts-mode is loaded
 download, build and install the grammar library.  The following
 settings provide control over this activity.
 
-#+VINDEX: gpr-ts-mode-grammar
-- ~gpr-ts-mode-grammar~ (default: [[https://github.com/brownts/tree-sitter-gpr]]) :: Location
-  of the tree-sitter GPR language grammar to be used by gpr-ts-mode.
-#+VINDEX: gpr-ts-mode-grammar-install
-- ~gpr-ts-mode-grammar-install~ (default: ~prompt~) :: Controls the level of
-  automation in installing the grammar library (automatic, prompt first,
-  etc).
+- User Option: gpr-ts-mode-grammar ::
+  Location of the tree-sitter GPR language grammar to be used by
+  gpr-ts-mode.
+
+- User Option: gpr-ts-mode-grammar-install ::
+  Controls the level of automation in installing the grammar library
+  (automatic, prompt first, etc).
 
 In order to build the library, you will need to have a C compiler
 installed.  Refer to the Emacs documentation surrounding
@@ -172,19 +172,20 @@ construct spanning multiple lines (i.e., broken indent).  The
 following configurations can be used to customize these indentation
 levels to match your own style.
 
-#+VINDEX: gpr-ts-mode-indent-offset
-- ~gpr-ts-mode-indent-offset~ (default: 3) :: Indentation used for
-  structural visualization
-#+VINDEX: gpr-ts-mode-indent-when-offset
-- ~gpr-ts-mode-indent-when-offset~ (default: 3) :: Indentation for case
-  items and comments, relative to a case construction.
-#+VINDEX: gpr-ts-mode-indent-broken-offset
-- ~gpr-ts-mode-indent-broken-offset~ (default: 2) :: Continuation
-  indentation when item does not completely reside on a single line.
-#+VINDEX: gpr-ts-mode-indent-exp-item-offset
-- ~gpr-ts-mode-indent-exp-item-offset~ (default: 2) :: Continuation
-  indentation for partial expressions (i.e., terms, concatenation,
-  etc).
+- User Option: gpr-ts-mode-indent-offset ::
+  Indentation used for structural visualization
+
+- User Option: gpr-ts-mode-indent-when-offset ::
+  Indentation for case items and comments, relative to a case
+  construction.
+
+- User Option: gpr-ts-mode-indent-broken-offset ::
+  Continuation indentation when item does not completely reside on a
+  single line.
+
+- User Option: gpr-ts-mode-indent-exp-item-offset ::
+  Continuation indentation for partial expressions (i.e., terms,
+  concatenation, etc).
 
 It should be noted that the settings above are defined in terms of
 each other, so that by customizing the standard indentation offset
@@ -230,10 +231,11 @@ instead.  This repurposing of function to project/package is also
 extended to =which-function-mode= support and will show the current
 project and package in the mode line, when enabled.
 
-#+KINDEX: C-M-a
-- =C-M-a= :: Move backward to beginning of package or project
-#+KINDEX: C-M-e
-- =C-M-e= :: Move forward to next end of package or project
+- Key: C-M-a (treesit-beginning-of-defun) ::
+  Move backward to beginning of package or project
+
+- Key: C-M-e (treesit-end-of-defun) ::
+  Move forward to next end of package or project
 
 With the provided Imenu support, additional options are available for
 ease of navigation within a single GPR file.  Packages, projects, type

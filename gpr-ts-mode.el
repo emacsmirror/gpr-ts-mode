@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.5.3
+;; Version: 0.5.4
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -34,6 +34,7 @@
 
 ;;; Code:
 
+(require 'info-look)
 (require 'lisp-mnt)
 (require 'treesit)
 (eval-when-compile (require 'rx))
@@ -620,6 +621,12 @@ Return nil if there is no name or if NODE is not a defun node."
   (add-to-list 'auto-mode-alist
                `(,(rx (or ".gpr" ".cgpr") eos) . gpr-ts-mode))
   (add-to-list 'major-mode-remap-alist '(gpr-mode . gpr-ts-mode)))
+
+(info-lookup-add-help
+ :topic 'symbol
+ :mode '(emacs-lisp-mode . "gpr")
+ :regexp "\\bgpr-ts-[^][()`'‘’,\" \t\n]+"
+ :doc-spec '(("(gpr-ts-mode)Variable Index" nil "^ -+ .*: " "\\( \\|$\\)")))
 
 (provide 'gpr-ts-mode)
 
