@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         emacs_version:
+          - 29.1
           - release-snapshot
     runs-on: ubuntu-latest
 
@@ -31,8 +32,11 @@ jobs:
           version: ${{matrix.emacs_version}}
 
       - name: Install Eldev
-        run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
+        uses: emacs-eldev/setup-eldev@v1
 
       - name: Test the project
         run: |
+          sudo apt --assume-yes install texinfo
           eldev -p -dtT test
+          eldev -dtT compile --warnings-as-errors
+          eldev -dtT lint
