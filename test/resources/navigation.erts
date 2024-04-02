@@ -1,8 +1,4 @@
-Code:
-  (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (call-interactively (key-binding (kbd "C-M-a"))))
+Code: (lambda () (navigation-transform "C-M-a"))
 
 Name: Project Beginning
 
@@ -46,11 +42,7 @@ end Hello_World;
 
 =-=-=
 
-Code:
-  (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (call-interactively (key-binding (kbd "C-M-e"))))
+Code: (lambda () (navigation-transform "C-M-e"))
 
 Name: Project End
 
@@ -92,11 +84,7 @@ end Hello_World;
 |
 =-=-=
 
-Code:
-  (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (call-interactively (key-binding (kbd "C-M-a"))))
+Code: (lambda () (navigation-transform "C-M-a"))
 
 Name: Package Beginning
 
@@ -138,11 +126,7 @@ end Hello_World;
 
 =-=-=
 
-Code:
-  (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (call-interactively (key-binding (kbd "C-M-e"))))
+Code: (lambda () (navigation-transform "C-M-e"))
 
 Name: Package End
 
@@ -184,12 +168,7 @@ end Hello_World;
 
 =-=-=
 
-Code:
-  (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (let ((current-prefix-arg 2))
-      (call-interactively (key-binding (kbd "C-M-e")))))
+Code: (lambda () (navigation-transform "C-M-e" 2))
 
 Name: Next Next Package End
 
@@ -231,11 +210,7 @@ end Hello_World;
 
 =-=-=
 
-Code:
-  (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (call-interactively (key-binding (kbd "C-M-a"))))
+Code: (lambda () (navigation-transform "C-M-a"))
 
 Name: Previous Package Start
 
@@ -277,12 +252,7 @@ end Hello_World;
 
 =-=-=
 
-Code:
-  (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (let ((current-prefix-arg 2))
-      (call-interactively (key-binding (kbd "C-M-a")))))
+Code: (lambda () (navigation-transform "C-M-a" 2))
 
 Name: Previous Previous Package Start
 

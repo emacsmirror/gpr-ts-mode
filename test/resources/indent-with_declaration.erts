@@ -1,9 +1,7 @@
 Code:
   (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (setq-local gpr-ts-mode-indent-broken-offset 2)
-    (indent-region (point-min) (point-max)))
+    (indent-transform
+      (lambda () (setq-local gpr-ts-mode-indent-broken-offset 2))))
 
 Name: Hanging Import List 1a
 
@@ -18,10 +16,8 @@ end Hello_World;
 
 Code:
   (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (setq-local gpr-ts-mode-indent-broken-offset 3)
-    (indent-region (point-min) (point-max)))
+    (indent-transform
+      (lambda () (setq-local gpr-ts-mode-indent-broken-offset 3))))
 
 Name: Hanging Import List 1b
 
@@ -36,10 +32,8 @@ end Hello_World;
 
 Code:
   (lambda ()
-    (gpr-ts-mode)
-    (setq-local indent-tabs-mode nil)
-    (setq-local gpr-ts-mode-indent-broken-offset 2)
-    (indent-region (point-min) (point-max)))
+    (indent-transform
+      (lambda () (setq-local gpr-ts-mode-indent-broken-offset 2))))
 
 Name: Hanging Import List 2a
 
