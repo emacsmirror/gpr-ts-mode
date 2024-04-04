@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'ert-font-lock nil 'noerror) ; Emacs 30+
 (require 'ert-x)
 (require 'gpr-ts-mode)
 (require 'treesit)
@@ -102,8 +103,15 @@ otherwise check that there is no error in the parse tree."
                           ((string-prefix-p "filling" file-noext) #'filling-transform)
                           ((string-prefix-p "indent" file-noext) #'indent-transform)
                           (t #'default-transform))))
-    (eval `(ert-deftest ,(intern (concat "gpr-ts-mode-test-" file-noext)) ()
-             (ert-test-erts-file ,file-path #',transform)))))
+    (if (string-prefix-p "font-lock" file-noext)
+        (eval `(ert-deftest ,(intern (concat "gpr-ts-mode-" file-noext)) ()
+                 (skip-unless (featurep 'ert-font-lock))
+                 (with-temp-buffer
+                   (insert-file-contents ,file-path)
+                   (funcall #',transform))
+                 (ert-font-lock-test-file ,file-path 'gpr-ts-mode)))
+      (eval `(ert-deftest ,(intern (concat "gpr-ts-mode-test-" file-noext)) ()
+               (ert-test-erts-file ,file-path #',transform))))))
 
 (provide 'gpr-ts-mode-tests)
 

@@ -235,6 +235,32 @@ attribute, function, number, operator, package, variable
 bracket, delimiter, error
 @end table
 
+The following user options can be customized to modify the syntax
+highlighting characteristics:
+
+@defopt gpr-ts-mode-package-names
+List of known package
+  names to highlight within variable references.  There are
+  ambiguities in the syntax tree for variable references.  For
+  example, @code{Foo'Bar} could be a reference to the @code{Bar} attribute in the
+  package @code{Foo} of the current project, or it could be a reference to
+  the top-level @code{Bar} attribute in the project @code{Foo}.  There are
+  additional ambiguities when child packages are involved since
+  references such as @code{Foo.X'Bar} exhibit the same problem.  This
+  ambiguity applies not just to variable attribute references but also
+  to regular variable references since variables can exist at the
+  project level as well as within a package.  If package names in
+  variable references are not properly highlighted, this causes an
+  inconsistency between highlighting of package names in package
+  declarations and not properly highlighting package names in variable
+  references.  Actively monitoring package names in the current
+  project as well as all withed projects is considered too heavy
+  handed and instead we settle for maintaining a list of package
+  names.  Since custom package names can be introduced (although
+  uncommon), the list of names can be customized, but is initialized
+  with the set of well-known names.
+@end defopt
+
 @node Indentation
 @chapter Indentation
 

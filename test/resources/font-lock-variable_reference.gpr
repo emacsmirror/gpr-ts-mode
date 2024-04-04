@@ -1,0 +1,49 @@
+with "shared";
+
+project Test is
+
+   for Source_Dirs use Shared'Source_Dirs &
+                         -- <- nil
+                         --   ^ font-lock-property-use-face
+                         Test'Source_Dirs &
+                         -- <- nil
+                         --   ^ font-lock-property-use-face
+                         Project'Source_Dirs;
+   --                    ^ nil
+   --                            ^ font-lock-property-use-face
+
+   package Compiler is
+      for Default_Switches ("Ada") use Compiler'Default_Switches ("Ada") & ("-gnata");
+      --                               ^ font-lock-function-call-face
+      --                                        ^ font-lock-property-use-face
+
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      --                               ^ nil
+      --                                      ^ font-lock-function-call-face
+      --                                               ^ font-lock-property-use-face
+
+      for Default_Switches ("Ada") use Shared.Child.Compiler'Default_Switches ("Ada");
+      --                               ^      ^ nil
+      --                                            ^ font-lock-function-call-face
+      --                                                     ^ font-lock-property-use-face
+
+      for Default_Switches ("Ada") use Compiler.My_Switches;
+      --                               ^ font-lock-function-call-face
+      --                                        ^ font-lock-variable-use-face
+
+      for Default_Switches ("Ada") use Shared.My_Switches;
+      --                               ^ nil
+      --                                      ^ font-lock-variable-use-face
+
+      for Default_Switches ("Ada") use Shared.Compiler.My_Switches;
+      --                               ^ nil
+      --                                      ^ font-lock-function-call-face
+      --                                               ^ font-lock-variable-use-face
+
+      for Default_Switches ("Ada") use Shared.Child.Compiler.My_Switches;
+      --                               ^      ^ nil
+      --                                            ^ font-lock-function-call-face
+      --                                                     ^ font-lock-variable-use-face
+   end Compiler;
+
+end Test;

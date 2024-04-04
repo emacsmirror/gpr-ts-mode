@@ -1,10 +1,10 @@
 ;;; gpr-ts-mode.el --- Major mode for GNAT project files using Tree-Sitter  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023 Troy Brown
+;; Copyright (C) 2023-2024 Troy Brown
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.5.4
+;; Version: 0.5.5
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -110,6 +110,17 @@ specified.  See `treesit-language-source-alist' for full details."
   :group 'gpr-ts
   :link '(custom-manual :tag "Grammar Installation" "(gpr-ts-mode)Grammar Installation")
   :package-version "0.5.0")
+
+(defcustom gpr-ts-mode-package-names
+  '("binder" "builder" "check" "clean" "compiler" "cross_reference"
+    "documentation" "eliminate" "finder" "gnatls" "gnatstub"
+    "ide" "install" "linker" "metrics" "naming" "pretty_printer"
+    "remote" "stack" "synchronize")
+  "List of known package names."
+  :type '(repeat string)
+  :group 'gpr-ts
+  :link '(custom-manual :tag "Syntax Highlighting" "(gpr-ts-mode)Syntax Highlighting")
+  :package-version "0.5.5")
 
 (defvar gpr-ts-mode-syntax-table
   (let ((table (make-syntax-table)))
@@ -472,7 +483,8 @@ Return nil if no child of that type is found."
    '((package_declaration
       [ origname: (name (identifier) @font-lock-function-call-face :anchor)
         basename: (name (identifier) @font-lock-function-call-face :anchor)])
-     (variable_reference (name (identifier) @font-lock-function-call-face :anchor) "'"))
+     ((variable_reference (name (identifier) @font-lock-function-call-face))
+      (:pred gpr-ts-mode--package-name-p @font-lock-function-call-face)))
 
    ;; String literals
    :language 'gpr
@@ -487,6 +499,7 @@ Return nil if no child of that type is found."
    ;; Variables
    :language 'gpr
    :feature 'variable
+   :override t
    '((variable_reference (name (identifier) @font-lock-variable-use-face :anchor) :anchor))
 
    ;; Operators
@@ -501,6 +514,13 @@ Return nil if no child of that type is found."
    '((ERROR) @font-lock-warning-face))
 
   "Font-lock settings for `gpr-ts-mode'.")
+
+(defun gpr-ts-mode--package-name-p (node)
+  "Check if NODE identifier matches a known package name."
+  (let ((identifier (downcase (treesit-node-text node t)))
+        (packages (mapcar #'downcase gpr-ts-mode-package-names)))
+    (seq-find (apply-partially #'string-equal identifier) packages)))
+
 
 ;;; Imenu
 
