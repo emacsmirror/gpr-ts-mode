@@ -1,0 +1,23 @@
+Point-Char: |
+
+Code: (lambda () (defun-transform "ABC"))
+
+Name: package_declaration (top-level)
+
+=-=
+package ABC is
+|
+end ABC;
+=-=-=
+
+Code: (lambda () (defun-transform "ABC.DEF"))
+
+Name: package_declaration (nested)
+
+=-=
+project ABC is
+   package DEF is
+   |
+   end DEF;
+end ABC;
+=-=-=

@@ -527,12 +527,18 @@ Return nil if no child of that type is found."
 (defun gpr-ts-mode--defun-name (node)
   "Return the defun name of NODE.
 Return nil if there is no name or if NODE is not a defun node."
-  (treesit-node-text
-   (pcase (treesit-node-type node)
-     ((or "project_declaration"
-          "package_declaration")
-      (treesit-node-child-by-field-name node "name")))
-   t))
+  (pcase (treesit-node-type node)
+    ("project_declaration"
+     (when-let ((identifiers
+                 (treesit-filter-child
+                  (treesit-node-child-by-field-name node "name")
+                  (lambda (n)
+                    (equal (treesit-node-type n) "identifier")))))
+       (string-join
+        (mapcar (lambda (n) (treesit-node-text n t)) identifiers)
+        treesit-add-log-defun-delimiter)))
+    ("package_declaration"
+     (treesit-node-text (treesit-node-child-by-field-name node "name") t))))
 
 (defun gpr-ts-mode--type-name (node)
   "Return the type name of NODE.

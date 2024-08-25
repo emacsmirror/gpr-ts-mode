@@ -24,6 +24,7 @@
 (require 'ert-x)
 (require 'gpr-ts-mode)
 (require 'treesit)
+(require 'which-func)
 
 (defun default-transform (&optional expect-error)
   "Default transform function for test.
@@ -36,6 +37,11 @@ otherwise check that there is no error in the parse tree."
                (treesit-buffer-root-node) "ERROR"))
     (should (not (treesit-search-subtree
                   (treesit-buffer-root-node) "ERROR")))))
+
+(defun defun-transform (name)
+  "Defun NAME transform function for test."
+  (default-transform)
+  (should (string-equal (which-function) name)))
 
 (defun filling-transform ()
   "Filling transform function for test."
@@ -83,20 +89,9 @@ otherwise check that there is no error in the parse tree."
   (setq-local indent-tabs-mode nil)
   (call-interactively #'newline))
 
-(dolist (file
-         (directory-files
-          (expand-file-name "resources"
-                            (file-name-directory
-                             (cond (load-in-progress load-file-name)
-                                   ((bound-and-true-p byte-compile-current-file)
-                                    byte-compile-current-file)
-                                   (t (buffer-file-name)))))
-          nil
-          (rx bos
-              (or (not ".")
-                  (seq "." (not "."))
-                  (seq ".." (+ anychar)))
-              )))
+(dolist (file (directory-files (ert-resource-directory)
+                               nil
+                               directory-files-no-dot-files-regexp))
   (let* ((file-noext (file-name-sans-extension file))
          (file-path (ert-resource-file file))
          (transform (cond ((string-suffix-p "-nl" file-noext) #'newline-transform)
@@ -104,12 +99,14 @@ otherwise check that there is no error in the parse tree."
                           ((string-prefix-p "indent" file-noext) #'indent-transform)
                           (t #'default-transform))))
     (if (string-prefix-p "font-lock" file-noext)
-        (eval `(ert-deftest ,(intern (concat "gpr-ts-mode-" file-noext)) ()
+        (eval `(ert-deftest ,(intern (concat "gpr-ts-mode-test-" file-noext)) ()
                  (skip-unless (featurep 'ert-font-lock))
                  (with-temp-buffer
                    (insert-file-contents ,file-path)
                    (funcall #',transform))
-                 (ert-font-lock-test-file ,file-path 'gpr-ts-mode)))
+                 ;; Force full fontification
+                 (let ((treesit-font-lock-level 4))
+                   (ert-font-lock-test-file ,file-path 'gpr-ts-mode))))
       (eval `(ert-deftest ,(intern (concat "gpr-ts-mode-test-" file-noext)) ()
                (ert-test-erts-file ,file-path #',transform))))))
 

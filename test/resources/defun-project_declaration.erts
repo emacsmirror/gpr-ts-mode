@@ -1,0 +1,39 @@
+Point-Char: |
+
+Code: (lambda () (defun-transform "ABC"))
+
+Name: project_declaration (identifier)
+
+=-=
+project ABC is
+|
+end ABC;
+=-=-=
+
+Code: (lambda () (defun-transform "ABC.DEF"))
+
+Name: project_declaration (identifier . identifier)
+
+=-=
+project ABC.DEF is
+|
+end ABC.DEF;
+=-=-=
+
+Code: (lambda () (defun-transform "ABC.DEF"))
+
+Name: project_declaration (broken)
+
+=-=
+project
+  ABC
+  .
+  DEF
+is
+|
+end
+  ABC
+  .
+  DEF
+;
+=-=-=
