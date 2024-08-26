@@ -30,6 +30,10 @@ jobs:
           sudo apt update
           sudo apt --assume-yes install texinfo
 
+      - name: Install Texinfo (MacOS)
+        if: runner.os == 'macOS'
+        run: brew install texinfo
+
       - name: Install Texinfo (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
