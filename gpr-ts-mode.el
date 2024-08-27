@@ -645,6 +645,10 @@ Return nil if there is no name or if NODE is not a defun node."
 (progn
   (add-to-list 'auto-mode-alist
                `(,(rx (or ".gpr" ".cgpr") eos) . gpr-ts-mode))
+  ;; Add gpr-mode as an "extra" parent so gpr-ts-mode can handle
+  ;; directory local variables for gpr-mode, etc. (Emacs 30+)
+  (when (fboundp 'derived-mode-add-parents)
+    (derived-mode-add-parents 'gpr-ts-mode '(gpr-mode)))
   ;; Prefer `major-mode-remap-defaults' if available (Emacs 30+)
   (if (boundp 'major-mode-remap-defaults)
       (add-to-list 'major-mode-remap-defaults '(gpr-mode . gpr-ts-mode))
