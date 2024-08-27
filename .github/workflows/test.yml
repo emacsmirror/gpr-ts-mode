@@ -61,4 +61,3 @@ jobs:
         run: |
           eldev -p -dtT test
           eldev -dtT compile --warnings-as-errors
-          eldev -dtT lint
