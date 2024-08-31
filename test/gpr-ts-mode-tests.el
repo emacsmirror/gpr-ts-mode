@@ -72,6 +72,23 @@ there is no error in the parse tree."
       (beginning-of-line)))
   (indent-region (point-min) (point-max)))
 
+(defun mode-transform (&optional version)
+  "Mode transform function for test.
+
+If VERSION is nil, the expected mode is \\='gpr-ts-mode\\='.  If VERSION
+is not nil, for an Emacs major version at or above VERSION, the expected
+mode is \\='gpr-ts-mode\\=', otherwise the expected mode is
+\\='fundamental-mode\\='."
+  (let ((inhibit-message t) ; Suppress 'Ignoring unknown mode ...'.
+        (expected-mode
+         (cond (version
+                (if (>= emacs-major-version version)
+                    'gpr-ts-mode
+                  'fundamental-mode))
+               (t 'gpr-ts-mode))))
+    (set-auto-mode)
+    (should (eq major-mode expected-mode))))
+
 (defun navigation-transform (binding &optional arg)
   "Navigation transform function for test.
 

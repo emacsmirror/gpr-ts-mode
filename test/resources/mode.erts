@@ -1,0 +1,39 @@
+Code: mode-transform
+
+Name: Mode on first line (gpr-ts)
+
+=-=
+-- -*- mode: gpr-ts -*-
+abstract project Test is
+end Test;
+=-=-=
+
+Name: Mode in local variable (gpr-ts)
+
+=-=
+abstract project Test is
+end Test;
+-- Local Variables:
+-- mode: gpr-ts
+-- End:
+=-=-=
+
+Code: (lambda () (mode-transform 30))
+
+Name: Mode on first line (gpr)
+
+=-=
+-- -*- mode: gpr -*-
+abstract project Test is
+end Test;
+=-=-=
+
+Name: Mode in local variable (gpr)
+
+=-=
+abstract project Test is
+end Test;
+-- Local Variables:
+-- mode: gpr
+-- End:
+=-=-=
