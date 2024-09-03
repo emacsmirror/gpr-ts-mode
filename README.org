@@ -253,7 +253,7 @@ state, you also benefit from the productivity gains as well.
 The following specialized navigation functions exist and are applied
 to GPR projects.  Since function declarations don't exist for GPR
 project files, this is repurposed to navigate packages and projects
-instead.  This repurposing of function to project/package is also
+instead.  This re-purposing of function to project/package is also
 extended to =which-function-mode= support and will show the current
 project and package in the mode line, when enabled.
 
@@ -262,6 +262,10 @@ project and package in the mode line, when enabled.
 
 - Key: C-M-e (treesit-end-of-defun) ::
   Move forward to next end of package or project
+
+Starting with Emacs 30, additional navigation functions are provided
+for ~S-expression~ and ~sentence~ traversal using the standard Emacs
+commands (i.e., =forward-sexp=, =forward-sentence=, etc).
 
 With the provided Imenu support, additional options are available for
 ease of navigation within a single GPR file.  Packages, projects, type

@@ -608,6 +608,21 @@ Return nil if there is no name or if NODE is not a defun node."
                                                 "package_declaration")))
   (setq-local treesit-defun-name-function #'gpr-ts-mode--defun-name)
 
+  ;; Things (Emacs 30+)
+  (setq-local treesit-thing-settings
+              `((gpr (sexp
+                      (not ,(rx (or "(" ")" ","))))
+                     (sentence
+                      ,(rx (or "attribute_declaration"
+                               "case_construction"
+                               "case_item"
+                               "empty_declaration"
+                               "typed_string_declaration"
+                               "variable_declaration"
+                               "with_declaration")))
+                     (text
+                      ,(rx (or "comment"))))))
+
   ;; Imenu.
   (setq-local treesit-simple-imenu-settings
               `(("Type"
