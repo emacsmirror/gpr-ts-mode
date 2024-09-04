@@ -112,14 +112,15 @@ specified.  See `treesit-language-source-alist' for full details."
 
 (defcustom gpr-ts-mode-package-names
   '("binder" "builder" "check" "clean" "compiler" "cross_reference"
-    "documentation" "eliminate" "finder" "gnatls" "gnatstub"
+    "documentation" "eliminate" "finder" "format" "gnatls" "gnatstub"
     "ide" "install" "linker" "metrics" "naming" "pretty_printer"
     "remote" "stack" "synchronize")
   "List of known package names."
   :type '(repeat string)
   :group 'gpr-ts
   :link '(custom-manual :tag "Syntax Highlighting" "(gpr-ts-mode)Syntax Highlighting")
-  :package-version "0.5.5")
+  :package-version "0.6.0")
+;;;###autoload(put 'gpr-ts-mode-package-names 'safe-local-variable #'list-of-strings-p)
 
 (defvar gpr-ts-mode-syntax-table
   (let ((table (make-syntax-table)))
