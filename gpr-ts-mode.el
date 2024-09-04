@@ -56,34 +56,34 @@
 (defcustom gpr-ts-mode-indent-offset 3
   "Indentation of statements."
   :type 'integer
-  :safe #'integerp
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
+;;;###autoload(put 'gpr-ts-mode-indent-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-indent-when-offset gpr-ts-mode-indent-offset
   "Indentation of `when' relative to `case'."
   :type 'integer
-  :safe #'integerp
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
+;;;###autoload(put 'gpr-ts-mode-indent-when-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-indent-broken-offset (- gpr-ts-mode-indent-offset 1)
   "Indentation for the continuation of a broken line."
   :type 'integer
-  :safe #'integerp
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
+;;;###autoload(put 'gpr-ts-mode-indent-broken-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-indent-exp-item-offset (- gpr-ts-mode-indent-offset 1)
   "Indentation for the continuation of an expression."
   :type 'integer
-  :safe #'integerp
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
   :package-version "0.5.0")
+;;;###autoload(put 'gpr-ts-mode-indent-exp-item-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-grammar "https://github.com/brownts/tree-sitter-gpr"
   "Configuration for downloading and installing the tree-sitter language grammar.
