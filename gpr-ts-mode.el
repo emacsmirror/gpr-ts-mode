@@ -38,6 +38,8 @@
 (require 'treesit)
 (eval-when-compile (require 'rx))
 
+(declare-function treesit-available-p "treesit.c")
+(declare-function treesit-language-available-p "treesit.c")
 (declare-function treesit-parser-create "treesit.c")
 (declare-function treesit-node-child-by-field-name "treesit.c")
 (declare-function treesit-node-next-sibling "treesit.c")
