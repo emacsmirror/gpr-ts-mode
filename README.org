@@ -248,7 +248,7 @@ declarations, case statements, etc.) are highly recommended.  Not only
 can this help keep your buffer closer to a syntactically correct
 state, you also benefit from the productivity gains as well.
 
-* Navigation / Imenu
+* Navigation
 
 The following specialized navigation functions exist and are applied
 to GPR projects.  Since function declarations don't exist for GPR
@@ -267,9 +267,37 @@ Starting with Emacs 30, additional navigation functions are provided
 for ~S-expression~ and ~sentence~ traversal using the standard Emacs
 commands (i.e., =forward-sexp=, =forward-sentence=, etc).
 
+* Imenu
+
 With the provided Imenu support, additional options are available for
-ease of navigation within a single GPR file.  Packages, projects, type
-declarations and typed variable declarations are enumerated.
+ease of navigation within a single GPR file.  Imenu supports indexing
+of attributes, packages, projects, type declarations, variable
+declarations and with clauses.
+
+- User Option: gpr-ts-mode-imenu-categories ::
+  The set of categories to be used for Imenu.  Since there are a
+  number of different categories supported, it may be a distraction to
+  display categories that aren't desired.  Therefore, the set of
+  categories can be customized to reduce clutter or to increase
+  performance.  The order in which the categories are listed will be
+  respected when the Imenu indexing is performed.  This is helpful if
+  specific ordering of categories is desired.
+
+- User Option: gpr-ts-mode-imenu-category-name-alist ::
+  The mapping between categories and the displayed name for the
+  category.  This customization may be helpful if you are expecting a
+  specific name for a category, use plural instead of singular nouns,
+  or want to customize for internationalization.
+
+The items in each Imenu category can be sorted for each nesting level.
+The specific ordering is controlled via =imenu-sort-function=, which can
+be customized to specify the desired sorting function.  When
+=imenu-sort-function= is nil, items are listed in the order they appear
+in the buffer.  It should be noted that while the mode applies the
+sorting as specified by =imenu-sort-function= as well as the category
+ordering specified in =gpr-ts-mode-imenu-categories=, downstream
+functionality (such as completion candidates in the minibuffer) may
+rearrange the order of items.
 
 * Troubleshooting
 
@@ -290,6 +318,25 @@ setting:
 #+BEGIN_SRC emacs-lisp
   (with-eval-after-load 'org-src
     (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts)))
+#+END_SRC
+
+** LSP Overriding Imenu
+
+The mode's Imenu support might be overridden if an LSP client is used
+with the major mode.  The mode typically provides a more organized and
+configurable Imenu experience than that provided by the Language
+Server.  In such cases, in order to use the mode's built-in Imenu
+support rather than that provided via the Language Server, Imenu
+support must be disabled in the LSP client's configuration.  For
+Eglot, LSP-provided Imenu is disabled by adding the =imenu= symbol to
+the list in the =eglot-stay-out-of= variable.
+#+BEGIN_SRC elisp
+  (setq eglot-stay-out-of '(imenu))
+#+END_SRC
+For =lsp-mode=, LSP-provided Imenu is disabled by clearing the
+~lsp-enable-imenu~ user option.
+#+BEGIN_SRC elisp
+  (setq lsp-enable-imenu nil)
 #+END_SRC
 
 * Example Configuration
@@ -313,6 +360,13 @@ and configuration of recommended supporting packages and modes.
       ;; Configure source blocks for Org Mode.
       (with-eval-after-load 'org-src
         (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts)))))
+
+  ;; Configure Imenu
+
+  (use-package imenu
+    :ensure nil ; built-in
+    :custom (imenu-auto-rescan t)
+    :hook (gpr-ts-mode . imenu-add-menubar-index))
 
   ;; Configure Electric Pair
 

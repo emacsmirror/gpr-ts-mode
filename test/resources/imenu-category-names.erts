@@ -1,0 +1,36 @@
+Code: (lambda ()
+        (imenu-transform
+         '(("*Attribute*"        ("Languages"))
+           ("*Package*"          ("Compiler"))
+           ("*Project*"          ("Test"))
+           ("*Type*"             ("Build_Type"))
+           ("*Typed Variable*"   ("Typed_Variable"))
+           ("*Untyped Variable*" ("Untyped_Variable"))
+           ("*Variable*"         ("Typed_Variable")
+                                 ("Untyped_Variable"))
+           ("*With Clause*"      ("\"shared\"")))
+         (lambda ()
+           (setq-local gpr-ts-mode-imenu-category-name-alist
+                       '((attribute        . "*Attribute*")
+                         (package          . "*Package*")
+                         (project          . "*Project*")
+                         (type             . "*Type*")
+                         (typed-variable   . "*Typed Variable*")
+                         (untyped-variable . "*Untyped Variable*")
+                         (variable         . "*Variable*")
+                         (with-clause      . "*With Clause*"))))))
+
+Name: Alternative Category Names
+
+=-=
+with "shared";
+
+project Test is
+   for Languages use ("Ada");
+   type Build_Type is ("Debug", "Production");
+   Typed_Variable : Build_Type := external ("BUILD", "Production");
+   Untyped_Variable := "foo";
+
+   package Compiler renames Shared.Compiler;
+end Test;
+=-=-=

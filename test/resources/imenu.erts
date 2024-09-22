@@ -1,0 +1,172 @@
+Code: (lambda () (imenu-transform nil nil t))
+
+Name: Emtpy file
+
+=-=
+=-=-=
+
+Code: (lambda () (imenu-transform '(("Project"
+                                     ("Test")))))
+
+Name: project_declaration (identifier)
+
+=-=
+project Test is
+end Test;
+=-=-=
+
+Code: (lambda () (imenu-transform '(("Project"
+                                     ("Test.ABC")))))
+
+Name: project_declaration (identifier . identifier)
+
+=-=
+project Test.ABC is
+end Test.ABC;
+=-=-=
+
+Code: (lambda () (imenu-transform '(("Package"
+                                     ("ABC")))))
+
+Name: package_declaration
+
+=-=
+package ABC is
+end ABC;
+=-=-=
+
+Code: (lambda () (imenu-transform
+                  '(("Attribute" ("Source_Dirs")))))
+
+Name: attribute_declaration
+
+=-=
+for Source_Dirs use (".");
+=-=-=
+
+Code: (lambda () (imenu-transform
+                  '(("Type" ("Typed_String")))))
+
+Name: typed_string_declaration
+
+=-=
+type Typed_String is ("A", "B");
+=-=-=
+
+Code: (lambda () (imenu-transform
+                  '(("Typed Variable" ("Typed_Variable"))
+                    ("Variable"       ("Typed_Variable")))))
+
+Name: variable_declaration (typed)
+
+=-=
+Typed_Variable : Typed_String := "B";
+=-=-=
+
+Code: (lambda () (imenu-transform
+                  '(("Untyped Variable" ("Untyped_Variable"))
+                    ("Variable"         ("Untyped_Variable")))))
+
+Name: variable_declaration (untyped)
+
+=-=
+Untyped_Variable := "foo";
+=-=-=
+
+Code: (lambda () (imenu-transform
+                  '(("With Clause" ("\"foo\"")
+                                   ("\"bar.gpr\"")
+                                   ("\"baz\"")))
+                  nil t))
+
+Name: with_clause
+
+=-=
+with "foo", "bar.gpr";
+with "baz";
+=-=-=
+
+Code: (lambda () (imenu-transform
+                  '(("Attribute"        ("Languages")
+                                        ("Main")
+                                        ("Object_Dir")
+                                        ("Executable(\"test.ada\" at 2)")
+                                        ("Executable(\"test.ada\" at 1)")
+                                        ("Builder"
+                                         ("Switches(others)"))
+                                        ("Compiler"
+                                         ("Default_Switches(\"Ada\")"))
+                                        ("Naming"
+                                         ("Spec_Suffix(\"Ada\")")
+                                         ("Body_Suffix(\"Ada\")")))
+                    ("Package"          ("Builder")
+                                        ("Compiler")
+                                        ("Linker")
+                                        ("Naming"))
+                    ("Project"          ("Test"))
+                    ("Type"             ("Build_Type"))
+                    ("Typed Variable"   ("Build"))
+                    ("Untyped Variable" ("Builder"
+                                         ("Switch_1")
+                                         ("Switch_2"))
+                                        ("Compiler"
+                                         ("Switches")
+                                         ("Switches")
+                                         ("Switches")))
+                    ("Variable"         ("Build")
+                                        ("Builder"
+                                         ("Switch_1")
+                                         ("Switch_2"))
+                                        ("Compiler"
+                                         ("Switches")
+                                         ("Switches")
+                                         ("Switches")))
+                    ("With Clause"      ("\"shared\"")
+                                        ("\"common\"")))))
+
+Name: Various
+
+=-=
+with "shared";
+with "common";
+
+project Test is
+   type Build_Type is ("Debug", "Production");
+   Build : Build_Type := external ("BUILD", "Production");
+
+   for Languages use ("Ada");
+   for Main use ("test.ada" at 1, "test.ada" at 2);
+   for Object_Dir use "obj";
+   for Executable ("test.ada" at 2) use "test2";
+   for Executable ("test.ada"
+                     -- comment
+                     at 1) use "test1";
+
+   package Builder extends Common.Builder is
+      Switch_1 := "-s";
+      Switch_2 := "-j0";
+
+      for Switches (others) use (Switch_1, Switch_2);
+   end Builder;
+
+   package Compiler is
+      Switches := ();
+
+      case Build is
+         when "Debug" =>
+            Switches := ("-g", "-gnata");
+         when "Production" =>
+            Switches := ("-gnatwe");
+      end case;
+
+      for Default_Switches ("Ada") use Default_Switches ("Ada") & Switches;
+   end Compiler;
+
+   package Linker renames Shared.Linker;
+
+   package Naming is
+      for Spec_Suffix ("Ada") use "_.ada";
+      for Body_Suffix ("Ada") use ".ada";
+   end Naming;
+end Test;
+=-=-=

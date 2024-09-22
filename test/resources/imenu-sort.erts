@@ -1,0 +1,144 @@
+Code: (lambda ()
+        (imenu-transform
+         '(("Attribute"        ("Attribute_1")   ("Attribute_2")   ("Attribute_3"))
+           ("Package"          ("Package_1")     ("Package_2")     ("Package_3"))
+           ("Project"          ("Test"))
+           ("Type"             ("Type_1")        ("Type_2")        ("Type_3"))
+           ("Typed Variable"   ("Typed_Var_1")   ("Typed_Var_2")   ("Typed_Var_3"))
+           ("Untyped Variable" ("Untyped_Var_1") ("Untyped_Var_2") ("Untyped_Var_3"))
+           ("Variable"         ("Typed_Var_1")   ("Typed_Var_2")   ("Typed_Var_3")
+                               ("Untyped_Var_1") ("Untyped_Var_2") ("Untyped_Var_3"))
+           ("With Clause"      ("\"file_1\"")    ("\"file_2\"")    ("\"file_3\"")))
+         (lambda ()
+           (setq-local imenu-sort-function
+                       (lambda (item1 item2)
+                         (string-lessp (car item1) (car item2)))))))
+
+Name: Alphabetical Sort
+
+=-=
+with "file_1", "file_3", "file_2";
+
+project Test is
+   for Attribute_1 use "1";
+   for Attribute_3 use "3";
+   for Attribute_2 use "2";
+
+   type Type_1 is ("1");
+   type Type_3 is ("3");
+   type Type_2 is ("2");
+
+   Typed_Var_1 : Type_1 := "1";
+   Typed_Var_3 : Type_3 := "3";
+   Typed_Var_2 : Type_2 := "2";
+
+   Untyped_Var_1 := "1";
+   Untyped_Var_3 := "3";
+   Untyped_Var_2 := "2";
+
+   package Package_1 is
+   end Package_1;
+
+   package Package_3 is
+   end Package_3;
+
+   package Package_2 is
+   end Package_2;
+end Test;
+=-=-=
+
+Code: (lambda ()
+        (imenu-transform
+         '(("Attribute"        ("Attribute_3")   ("Attribute_2")   ("Attribute_1"))
+           ("Package"          ("Package_3")     ("Package_2")     ("Package_1"))
+           ("Project"          ("Test"))
+           ("Type"             ("Type_3")        ("Type_2")        ("Type_1"))
+           ("Typed Variable"   ("Typed_Var_3")   ("Typed_Var_2")   ("Typed_Var_1"))
+           ("Untyped Variable" ("Untyped_Var_3") ("Untyped_Var_2") ("Untyped_Var_1"))
+           ("Variable"         ("Untyped_Var_3") ("Untyped_Var_2") ("Untyped_Var_1")
+                               ("Typed_Var_3")   ("Typed_Var_2")   ("Typed_Var_1"))
+           ("With Clause"      ("\"file_3\"")     ("\"file_2\"")    ("\"file_1\"")))
+         (lambda ()
+           (setq-local imenu-sort-function
+                       (lambda (item1 item2)
+                         (string-greaterp (car item1) (car item2)))))))
+
+Name: Reverse Alphabetical Sort
+
+=-=
+with "file_1", "file_3", "file_2";
+
+project Test is
+   for Attribute_1 use "1";
+   for Attribute_3 use "3";
+   for Attribute_2 use "2";
+
+   type Type_1 is ("1");
+   type Type_3 is ("3");
+   type Type_2 is ("2");
+
+   Typed_Var_1 : Type_1 := "1";
+   Typed_Var_3 : Type_3 := "3";
+   Typed_Var_2 : Type_2 := "2";
+
+   Untyped_Var_1 := "1";
+   Untyped_Var_3 := "3";
+   Untyped_Var_2 := "2";
+
+   package Package_1 is
+   end Package_1;
+
+   package Package_3 is
+   end Package_3;
+
+   package Package_2 is
+   end Package_2;
+end Test;
+=-=-=
+
+Code: (lambda ()
+        (imenu-transform
+         '(("Attribute"        ("Attribute_1")   ("Attribute_3")   ("Attribute_2"))
+           ("Package"          ("Package_1")     ("Package_3")     ("Package_2"))
+           ("Project"          ("Test"))
+           ("Type"             ("Type_1")        ("Type_3")        ("Type_2"))
+           ("Typed Variable"   ("Typed_Var_1")   ("Typed_Var_3")   ("Typed_Var_2"))
+           ("Untyped Variable" ("Untyped_Var_1") ("Untyped_Var_3") ("Untyped_Var_2"))
+           ("Variable"         ("Typed_Var_1")   ("Typed_Var_3")   ("Typed_Var_2")
+                               ("Untyped_Var_1") ("Untyped_Var_3") ("Untyped_Var_2"))
+           ("With Clause"      ("\"file_1\"")     ("\"file_3\"")    ("\"file_2\"")))
+         (lambda ()
+           (setq-local imenu-sort-function nil))))
+
+Name: In Buffer Order
+
+=-=
+with "file_1", "file_3", "file_2";
+
+project Test is
+   for Attribute_1 use "1";
+   for Attribute_3 use "3";
+   for Attribute_2 use "2";
+
+   type Type_1 is ("1");
+   type Type_3 is ("3");
+   type Type_2 is ("2");
+
+   Typed_Var_1 : Type_1 := "1";
+   Typed_Var_3 : Type_3 := "3";
+   Typed_Var_2 : Type_2 := "2";
+
+   Untyped_Var_1 := "1";
+   Untyped_Var_3 := "3";
+   Untyped_Var_2 := "2";
+
+   package Package_1 is
+   end Package_1;
+
+   package Package_3 is
+   end Package_3;
+
+   package Package_2 is
+   end Package_2;
+end Test;
+=-=-=

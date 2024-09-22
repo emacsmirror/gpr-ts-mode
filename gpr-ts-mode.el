@@ -39,10 +39,14 @@
 (eval-when-compile (require 'rx))
 
 (declare-function treesit-available-p "treesit.c")
+(declare-function treesit-induce-sparse-tree "treesit.c")
 (declare-function treesit-language-available-p "treesit.c")
 (declare-function treesit-parser-create "treesit.c")
 (declare-function treesit-node-child-by-field-name "treesit.c")
+(declare-function treesit-node-child-count "treesit.c")
+(declare-function treesit-node-end "treesit.c")
 (declare-function treesit-node-next-sibling "treesit.c")
+(declare-function treesit-node-parent "treesit.c")
 (declare-function treesit-node-start "treesit.c")
 (declare-function treesit-node-type "treesit.c")
 
@@ -54,6 +58,39 @@
                    ,(lm-website (locate-library "gpr-ts-mode.el")))
   :link '(custom-manual "(gpr-ts-mode)Top")
   :prefix "gpr-ts-mode-")
+
+(defcustom gpr-ts-mode-imenu-categories
+  '(attribute package type variable with-clause)
+  "Configuration of Imenu categories."
+  :type '(repeat :tag "Categories"
+                 (choice :tag "Category"
+                         (const :tag "Attribute Declaration" attribute)
+                         (const :tag "Package Declaration" package)
+                         (const :tag "Project Declaration" project)
+                         (const :tag "Type Declaration" type)
+                         (const :tag "Typed Variable Declaration" typed-variable)
+                         (const :tag "Untyped Variable Declaration" untyped-variable)
+                         (const :tag "Typed and Untyped Variable Declaration" variable)
+                         (const :tag "With Clause" with-clause)))
+  :group 'gpr-ts
+  :link '(custom-manual :tag "Imenu" "(gpr-ts-mode)Imenu")
+  :package-version "0.6.0")
+
+(defcustom gpr-ts-mode-imenu-category-name-alist
+  '((attribute        . "Attribute")
+    (package          . "Package")
+    (project          . "Project")
+    (type             . "Type")
+    (typed-variable   . "Typed Variable")
+    (untyped-variable . "Untyped Variable")
+    (variable         . "Variable")
+    (with-clause      . "With Clause"))
+  "Configuration of Imenu category names."
+  :type '(alist :key-type   (symbol :tag "Category")
+                :value-type (string :tag "Category Name"))
+  :group 'gpr-ts
+  :link '(custom-manual :tag "Imenu" "(gpr-ts-mode)Imenu")
+  :package-version "0.6.0")
 
 (defcustom gpr-ts-mode-indent-offset 3
   "Indentation of statements."
@@ -526,44 +563,304 @@ Return nil if no child of that type is found."
 
 ;;; Imenu
 
+(defun gpr-ts-mode--tree-text
+    (node &optional ignored-types region-beg-type region-end-type)
+  "Extract text found within the tree of NODE.
+
+IGNORED-TYPES specifies a list of node types within the tree to ignore.
+REGION-BEG-TYPE specifies the type of the first child node of NODE to
+begin text extraction (exclusive).  REGION-END-TYPE specifies the first
+child node of NODE to end text extraction (exclusive).  When
+REGION-BEG-TYPE or REGION-END-TYPE are nil, the region is expanded to
+the beginning or end of NODE respectively.
+
+The extracted text will retain its text properties and the text of the
+nodes will be uniformly spaced with the exception of parenthesis and
+periods."
+
+  (let* ((beg (when region-beg-type
+                (treesit-node-end
+                 (gpr-ts-mode--first-child-matching node region-beg-type))))
+         (end (when region-end-type
+                (treesit-node-start
+                 (gpr-ts-mode--first-child-matching node region-end-type))))
+         (tree (treesit-induce-sparse-tree
+                node
+                (lambda (node)
+                  (let ((start (treesit-node-start node)))
+                    (and (or (null beg) (> start beg))
+                         (or (null end) (< start end))
+                         (not (member (treesit-node-type node) ignored-types))
+                         (= (treesit-node-child-count node) 0))))))
+         (terminals (flatten-list (cdr tree))))
+    ;; Add spacing between terminals
+    (let ((name nil)
+          (prev-node-type nil)
+          (node-type nil)
+          (no-space-regexp (rx bos (or "(" ")" ".") eos)))
+      (dolist (terminal terminals)
+        (setq node-type (treesit-node-type terminal))
+        (when prev-node-type
+          (unless (or (string-match-p no-space-regexp node-type)
+                      (string-match-p no-space-regexp prev-node-type))
+            (push " " name)))
+        (push (treesit-node-text terminal) name)
+        (setq prev-node-type node-type))
+      (string-join (reverse name)))))
+
+(defun gpr-ts-mode--attribute-declaration-p (node)
+  "Determine if NODE is an attribute declaration.
+Return non-nil to indicate it is."
+  (string-equal (treesit-node-type node) "attribute_declaration"))
+
+(defun gpr-ts-mode--attribute-declaration-name (node)
+  "Return the name associated with NODE.
+Return nil if NODE is not an attribute declaration node."
+  (when (gpr-ts-mode--attribute-declaration-p node)
+    (gpr-ts-mode--tree-text node '("comment") "for" "use")))
+
+(defun gpr-ts-mode--package-declaration-p (node)
+  "Determine if NODE is a package declaration.
+Return non-nil to indicate it is."
+  (string-equal (treesit-node-type node) "package_declaration"))
+
+(defun gpr-ts-mode--package-declaration-name (node)
+  "Return the name associated with NODE.
+Return nil if NODE is not a package declaration node."
+  (when (gpr-ts-mode--package-declaration-p node)
+    (treesit-node-text (treesit-node-child-by-field-name node "name"))))
+
+(defun gpr-ts-mode--project-declaration-p (node)
+  "Determine if NODE is a project declaration.
+Return non-nil to indicate it is."
+  (string-equal (treesit-node-type node) "project_declaration"))
+
+(defun gpr-ts-mode--project-declaration-name (node)
+  "Return the name associated with NODE.
+Return nil if NODE is not a project declaration node."
+  (when (gpr-ts-mode--project-declaration-p node)
+    (gpr-ts-mode--tree-text
+     (treesit-node-child-by-field-name node "name")
+     '("comment"))))
+
+(defun gpr-ts-mode--defun-p (node)
+  "Determine if NODE is a defun node.
+Return non-nil to indicate it is."
+  (or (gpr-ts-mode--project-declaration-p node)
+      (gpr-ts-mode--package-declaration-p node)))
+
 (defun gpr-ts-mode--defun-name (node)
-  "Return the defun name of NODE.
-Return nil if there is no name or if NODE is not a defun node."
-  (pcase (treesit-node-type node)
-    ("project_declaration"
-     (when-let ((identifiers
-                 (treesit-filter-child
-                  (treesit-node-child-by-field-name node "name")
-                  (lambda (n)
-                    (equal (treesit-node-type n) "identifier")))))
-       (string-join
-        (mapcar (lambda (n) (treesit-node-text n t)) identifiers)
-        treesit-add-log-defun-delimiter)))
-    ("package_declaration"
-     (treesit-node-text (treesit-node-child-by-field-name node "name") t))))
+  "Return the name associated with NODE.
+Return nil if NODE is not a defun node."
+  (or (gpr-ts-mode--project-declaration-name node)
+      (gpr-ts-mode--package-declaration-name node)))
 
-(defun gpr-ts-mode--type-name (node)
-  "Return the type name of NODE.
-Return nil if there is no name or if NODE is not a defun node."
-  (treesit-node-text
-   (pcase (treesit-node-type node)
-     ("typed_string_declaration"
-      (treesit-node-child-by-field-name node "name")))
-   t))
+(defun gpr-ts-mode--type-declaration-p (node)
+  "Determine if NODE is a type declaration.
+Return non-nil to indicate it is."
+  (string-equal (treesit-node-type node) "typed_string_declaration"))
 
-(defun gpr-ts-mode--typed-variable-p (node)
-  "Determine if NODE is a typed variable.
+(defun gpr-ts-mode--type-declaration-name (node)
+  "Return the name associated with NODE.
+Return nil if NODE is not a type declaration node."
+  (when (gpr-ts-mode--type-declaration-p node)
+    (treesit-node-text (treesit-node-child-by-field-name node "name"))))
+
+(defun gpr-ts-mode--variable-declaration-p (node)
+  "Determine if NODE is a variable declaration.
 Return non-nil to indicate that it is."
-  (treesit-node-child-by-field-name node "type"))
+  (string-equal (treesit-node-type node) "variable_declaration"))
 
-(defun gpr-ts-mode--typed-variable-name (node)
-  "Return type variable name of NODE.
-Return nil if there is no name or if NODE is not a defun node."
-  (treesit-node-text
-   (pcase (treesit-node-type node)
-     ("variable_declaration"
-      (treesit-node-child-by-field-name node "name")))
-   t))
+(defun gpr-ts-mode--variable-declaration-name (node)
+  "Return the name associated with NODE.
+Return nil if NODE is not a variable declaration node."
+  (when (gpr-ts-mode--variable-declaration-p node)
+    (treesit-node-text
+     (treesit-node-child-by-field-name node "name"))))
+
+(defun gpr-ts-mode--typed-variable-declaration-p (node)
+  "Determine if NODE is a typed variable declaration.
+Return non-nil to indicate that it is."
+  (and (gpr-ts-mode--variable-declaration-p node)
+       (treesit-node-child-by-field-name node "type")))
+
+(defun gpr-ts-mode--untyped-variable-declaration-p (node)
+  "Determine if NODE is an untyped variable declaration.
+Return non-nil to indicate that it is."
+  (and (gpr-ts-mode--variable-declaration-p node)
+       (not (gpr-ts-mode--typed-variable-declaration-p node))))
+
+(defun gpr-ts-mode--with-clause-name-p (node)
+  "Determine if NODE is a string within a with clause."
+  (and (string-equal (treesit-node-type (treesit-node-parent node))
+                     "with_declaration")
+       (string-equal (treesit-node-type node)
+                     "string_literal")))
+
+(defun gpr-ts-mode--imenu-index (tree item-p branch-p item-name-fn branch-name-fn)
+  "Return Imenu index for a specific item category given TREE.
+
+ITEM-P is a predicate for testing the item category's node.
+ITEM-NAME-FN determines the name of the item given the item's node.
+BRANCH-P is a predicate for determining if a node is a branch.  This is
+used to identify higher level nesting structures (i.e., packages,
+subprograms, etc.) which encompass the item.  BRANCH-NAME-FN determines
+the name of the branch given the branch node."
+  (let* ((node (car tree))
+         (sort-fn
+          (if imenu-sort-function
+              (lambda (items) (sort items imenu-sort-function))
+            #'identity))
+         (subtrees
+          (funcall sort-fn
+                   (mapcan (lambda (tree)
+                             (gpr-ts-mode--imenu-index tree
+                                                       item-p
+                                                       branch-p
+                                                       item-name-fn
+                                                       branch-name-fn))
+                           (cdr tree))))
+         (marker (set-marker (make-marker)
+                             (treesit-node-start node)))
+         (item (funcall item-p node))
+         (item-name (when item (funcall item-name-fn node)))
+         (branch (funcall branch-p node))
+         (branch-name (when branch (funcall branch-name-fn node))))
+    (cond ((and item (not subtrees))
+           (list (cons item-name marker)))
+          ((and item subtrees)
+           (error "Unexpected nested item(s)"))
+          ((and branch subtrees)
+           (list (cons branch-name subtrees)))
+          (t subtrees))))
+
+(defun gpr-ts-mode--imenu ()
+  "Return Imenu alist for the current buffer."
+  (let* ((root (treesit-buffer-root-node))
+         ;; Attribute Declaration
+         (index-attribute
+          (and (memq 'attribute gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 (lambda (node)
+                   (or (gpr-ts-mode--package-declaration-p node)
+                       (gpr-ts-mode--attribute-declaration-p node))))
+                #'gpr-ts-mode--attribute-declaration-p
+                #'gpr-ts-mode--package-declaration-p
+                #'gpr-ts-mode--attribute-declaration-name
+                #'gpr-ts-mode--package-declaration-name)))
+         ;; Package Declaration
+         (index-package
+          (and (memq 'package gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 #'gpr-ts-mode--package-declaration-p
+                 nil
+                 2)
+                #'identity
+                #'ignore
+                #'gpr-ts-mode--package-declaration-name
+                #'ignore)))
+         ;; Project Declaration
+         (index-project
+          (and (memq 'project gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 #'gpr-ts-mode--project-declaration-p
+                 nil
+                 1)
+                #'identity
+                #'ignore
+                #'gpr-ts-mode--project-declaration-name
+                #'ignore)))
+         ;; Type Declaration
+         (index-type
+          (and (memq 'type gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 #'gpr-ts-mode--type-declaration-p
+                 nil
+                 2)
+                #'identity
+                #'ignore
+                #'gpr-ts-mode--type-declaration-name
+                #'ignore)))
+         ;; Typed Variable Declaration
+         (index-typed-variable
+          (and (memq 'typed-variable gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 (lambda (node)
+                   (or (gpr-ts-mode--package-declaration-p node)
+                       (gpr-ts-mode--typed-variable-declaration-p node))))
+                #'gpr-ts-mode--typed-variable-declaration-p
+                #'gpr-ts-mode--package-declaration-p
+                #'gpr-ts-mode--variable-declaration-name
+                #'gpr-ts-mode--package-declaration-name)))
+         ;; Untyped Variable Declaration
+         (index-untyped-variable
+          (and (memq 'untyped-variable gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 (lambda (node)
+                   (or (gpr-ts-mode--package-declaration-p node)
+                       (gpr-ts-mode--untyped-variable-declaration-p node))))
+                #'gpr-ts-mode--untyped-variable-declaration-p
+                #'gpr-ts-mode--package-declaration-p
+                #'gpr-ts-mode--variable-declaration-name
+                #'gpr-ts-mode--package-declaration-name)))
+         ;; Variable Declaration
+         (index-variable
+          (and (memq 'variable gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 (lambda (node)
+                   (or (gpr-ts-mode--package-declaration-p node)
+                       (gpr-ts-mode--variable-declaration-p node))))
+                #'gpr-ts-mode--variable-declaration-p
+                #'gpr-ts-mode--package-declaration-p
+                #'gpr-ts-mode--variable-declaration-name
+                #'gpr-ts-mode--package-declaration-name)))
+         ;; With Clause
+         (index-with-clause
+          (and (memq 'with-clause gpr-ts-mode-imenu-categories)
+               (gpr-ts-mode--imenu-index
+                (treesit-induce-sparse-tree
+                 root
+                 #'gpr-ts-mode--with-clause-name-p
+                 nil
+                 2)
+                #'identity
+                #'ignore
+                #'treesit-node-text
+                #'ignore)))
+         (imenu-alist
+          ;; Respect category ordering in `gpr-ts-mode-imenu-categories'
+          (mapcar (lambda (category)
+                    (let* ((index (pcase category
+                                    ('attribute        index-attribute)
+                                    ('package          index-package)
+                                    ('project          index-project)
+                                    ('type             index-type)
+                                    ('typed-variable   index-typed-variable)
+                                    ('untyped-variable index-untyped-variable)
+                                    ('variable         index-variable)
+                                    ('with-clause      index-with-clause)
+                                    (_ (error "Unknown category: %s" category))))
+                           (name (or (alist-get category gpr-ts-mode-imenu-category-name-alist)
+                                     (error "Unspecified category name for: %s" category))))
+                      (cons name index)))
+                  gpr-ts-mode-imenu-categories)))
+
+    ;; Remove empty categories
+    (seq-filter (lambda (i) (cdr i)) imenu-alist)))
 
 ;;;###autoload
 (define-derived-mode gpr-ts-mode prog-mode "GNAT Project"
@@ -627,27 +924,14 @@ Return nil if there is no name or if NODE is not a defun node."
                       ,(rx (or "comment"))))))
 
   ;; Imenu.
-  (setq-local treesit-simple-imenu-settings
-              `(("Type"
-                 ,(rx "typed_string_declaration")
-                 nil
-                 gpr-ts-mode--type-name)
-                ("Variable"
-                 ,(rx "variable_declaration")
-                 gpr-ts-mode--typed-variable-p
-                 gpr-ts-mode--typed-variable-name)
-                ("Package"
-                 ,(rx "package_declaration")
-                 nil
-                 nil)
-                ("Project"
-                 ,(rx "project_declaration")
-                 nil
-                 nil)))
+  (setq-local imenu-create-index-function #'gpr-ts-mode--imenu)
 
   ;; Indent.
   (setq-local treesit-simple-indent-rules gpr-ts-mode--indent-rules)
   (setq-local electric-indent-chars (append ";>," electric-indent-chars))
+
+  ;; Outline minor mode (Emacs 30+)
+  (setq-local treesit-outline-predicate #'gpr-ts-mode--defun-p)
 
   ;; Font-lock.
   (setq-local treesit-font-lock-settings gpr-ts-mode--font-lock-settings)

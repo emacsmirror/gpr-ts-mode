@@ -23,6 +23,7 @@
 (require 'ert-font-lock nil 'noerror) ; Emacs 30+
 (require 'ert-x)
 (require 'gpr-ts-mode)
+(require 'imenu)
 (require 'treesit)
 (require 'which-func)
 
@@ -47,6 +48,51 @@ otherwise check that there is no error in the parse tree."
   "Filling transform function for test."
   (default-transform)
   (fill-paragraph))
+
+(defun imenu-transform (menu &optional setup expect-error)
+  "IMenu MENU transform function for test.
+
+Only the structure is checked, not the markers.  SETUP can be
+used to perform custom initialization.  If EXPECT-ERROR is
+non-nil, then check for an error in the parse tree, otherwise
+check that there is no error in the parse tree."
+  (default-transform expect-error)
+  ;; Enable all categories by default.  These can be overridden in the
+  ;; SETUP function if needed.
+  (setq-local gpr-ts-mode-imenu-categories
+              (let ((custom-type
+                     (flatten-tree
+                      (get 'gpr-ts-mode-imenu-categories 'custom-type)))
+                    (categories))
+                (while custom-type
+                  ;; drop until we see "const"
+                  (setq custom-type
+                        (seq-drop-while
+                         (lambda (item) (not (equal item 'const)))
+                         custom-type))
+                  (when custom-type
+                    ;; drop "const"
+                    (setq custom-type (cdr custom-type))
+                    ;; remove keyword pairs
+                    (while (keywordp (car custom-type))
+                      (setq custom-type (seq-drop custom-type 2)))
+                    ;; extract category
+                    (push (car custom-type) categories)
+                    ;; drop category
+                    (setq custom-type (cdr custom-type))))
+                (reverse categories)))
+  (when setup
+    (funcall setup))
+  (cl-labels ((filter-menu (menu-item)
+                (cond ((markerp menu-item) nil) ; remove marker
+                      ((proper-list-p menu-item)
+                       (mapcar #'filter-menu menu-item))
+                      ((consp menu-item)
+                       (cons (filter-menu (car menu-item))
+                             (filter-menu (cdr menu-item))))
+                      (t menu-item))))
+    (let* ((actual-menu (filter-menu (funcall imenu-create-index-function))))
+      (should (equal menu actual-menu)))))
 
 (defun indent-transform (&optional setup expect-error)
   "Indentation transform function for test.
