@@ -34,6 +34,7 @@
 
 ;;; Code:
 
+(require 'cl-generic)
 (require 'lisp-mnt)
 (require 'treesit)
 (eval-when-compile (require 'rx))
@@ -734,133 +735,123 @@ the name of the branch given the branch node."
            (list (cons branch-name subtrees)))
           (t subtrees))))
 
+(cl-defgeneric gpr-ts-mode-imenu-index (category)
+  "Create Imenu index for CATEGORY."
+  (error "Unknown category: %s" category))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql attribute)))
+  "Create Imenu index for attributes."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    (lambda (node)
+      (or (gpr-ts-mode--package-declaration-p node)
+          (gpr-ts-mode--attribute-declaration-p node))))
+   #'gpr-ts-mode--attribute-declaration-p
+   #'gpr-ts-mode--package-declaration-p
+   #'gpr-ts-mode--attribute-declaration-name
+   #'gpr-ts-mode--package-declaration-name))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql package)))
+  "Create Imenu index for packages."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    #'gpr-ts-mode--package-declaration-p
+    nil
+    2)
+   #'identity
+   #'ignore
+   #'gpr-ts-mode--package-declaration-name
+   #'ignore))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql project)))
+  "Create Imenu index for projects."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    #'gpr-ts-mode--project-declaration-p
+    nil
+    1)
+   #'identity
+   #'ignore
+   #'gpr-ts-mode--project-declaration-name
+   #'ignore))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql type)))
+  "Create Imenu index for types."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    #'gpr-ts-mode--type-declaration-p
+    nil
+    2)
+   #'identity
+   #'ignore
+   #'gpr-ts-mode--type-declaration-name
+   #'ignore))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql typed-variable)))
+  "Create Imenu index for typed variables."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    (lambda (node)
+      (or (gpr-ts-mode--package-declaration-p node)
+          (gpr-ts-mode--typed-variable-declaration-p node))))
+   #'gpr-ts-mode--typed-variable-declaration-p
+   #'gpr-ts-mode--package-declaration-p
+   #'gpr-ts-mode--variable-declaration-name
+   #'gpr-ts-mode--package-declaration-name))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql untyped-variable)))
+  "Create Imenu index for untyped variables."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    (lambda (node)
+      (or (gpr-ts-mode--package-declaration-p node)
+          (gpr-ts-mode--untyped-variable-declaration-p node))))
+   #'gpr-ts-mode--untyped-variable-declaration-p
+   #'gpr-ts-mode--package-declaration-p
+   #'gpr-ts-mode--variable-declaration-name
+   #'gpr-ts-mode--package-declaration-name))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql variable)))
+  "Create Imenu index for variables."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    (lambda (node)
+      (or (gpr-ts-mode--package-declaration-p node)
+          (gpr-ts-mode--variable-declaration-p node))))
+   #'gpr-ts-mode--variable-declaration-p
+   #'gpr-ts-mode--package-declaration-p
+   #'gpr-ts-mode--variable-declaration-name
+   #'gpr-ts-mode--package-declaration-name))
+
+(cl-defmethod gpr-ts-mode-imenu-index ((_category (eql with-clause)))
+  "Create Imenu index for with clauses."
+  (gpr-ts-mode--imenu-index
+   (treesit-induce-sparse-tree
+    (treesit-buffer-root-node)
+    #'gpr-ts-mode--with-clause-name-p
+    nil
+    2)
+   #'identity
+   #'ignore
+   #'treesit-node-text
+   #'ignore))
+
 (defun gpr-ts-mode--imenu ()
   "Return Imenu alist for the current buffer."
-  (let* ((root (treesit-buffer-root-node))
-         ;; Attribute Declaration
-         (index-attribute
-          (and (memq 'attribute gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 (lambda (node)
-                   (or (gpr-ts-mode--package-declaration-p node)
-                       (gpr-ts-mode--attribute-declaration-p node))))
-                #'gpr-ts-mode--attribute-declaration-p
-                #'gpr-ts-mode--package-declaration-p
-                #'gpr-ts-mode--attribute-declaration-name
-                #'gpr-ts-mode--package-declaration-name)))
-         ;; Package Declaration
-         (index-package
-          (and (memq 'package gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 #'gpr-ts-mode--package-declaration-p
-                 nil
-                 2)
-                #'identity
-                #'ignore
-                #'gpr-ts-mode--package-declaration-name
-                #'ignore)))
-         ;; Project Declaration
-         (index-project
-          (and (memq 'project gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 #'gpr-ts-mode--project-declaration-p
-                 nil
-                 1)
-                #'identity
-                #'ignore
-                #'gpr-ts-mode--project-declaration-name
-                #'ignore)))
-         ;; Type Declaration
-         (index-type
-          (and (memq 'type gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 #'gpr-ts-mode--type-declaration-p
-                 nil
-                 2)
-                #'identity
-                #'ignore
-                #'gpr-ts-mode--type-declaration-name
-                #'ignore)))
-         ;; Typed Variable Declaration
-         (index-typed-variable
-          (and (memq 'typed-variable gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 (lambda (node)
-                   (or (gpr-ts-mode--package-declaration-p node)
-                       (gpr-ts-mode--typed-variable-declaration-p node))))
-                #'gpr-ts-mode--typed-variable-declaration-p
-                #'gpr-ts-mode--package-declaration-p
-                #'gpr-ts-mode--variable-declaration-name
-                #'gpr-ts-mode--package-declaration-name)))
-         ;; Untyped Variable Declaration
-         (index-untyped-variable
-          (and (memq 'untyped-variable gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 (lambda (node)
-                   (or (gpr-ts-mode--package-declaration-p node)
-                       (gpr-ts-mode--untyped-variable-declaration-p node))))
-                #'gpr-ts-mode--untyped-variable-declaration-p
-                #'gpr-ts-mode--package-declaration-p
-                #'gpr-ts-mode--variable-declaration-name
-                #'gpr-ts-mode--package-declaration-name)))
-         ;; Variable Declaration
-         (index-variable
-          (and (memq 'variable gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 (lambda (node)
-                   (or (gpr-ts-mode--package-declaration-p node)
-                       (gpr-ts-mode--variable-declaration-p node))))
-                #'gpr-ts-mode--variable-declaration-p
-                #'gpr-ts-mode--package-declaration-p
-                #'gpr-ts-mode--variable-declaration-name
-                #'gpr-ts-mode--package-declaration-name)))
-         ;; With Clause
-         (index-with-clause
-          (and (memq 'with-clause gpr-ts-mode-imenu-categories)
-               (gpr-ts-mode--imenu-index
-                (treesit-induce-sparse-tree
-                 root
-                 #'gpr-ts-mode--with-clause-name-p
-                 nil
-                 2)
-                #'identity
-                #'ignore
-                #'treesit-node-text
-                #'ignore)))
-         (imenu-alist
-          ;; Respect category ordering in `gpr-ts-mode-imenu-categories'
-          (mapcar (lambda (category)
-                    (let* ((index (pcase category
-                                    ('attribute        index-attribute)
-                                    ('package          index-package)
-                                    ('project          index-project)
-                                    ('type             index-type)
-                                    ('typed-variable   index-typed-variable)
-                                    ('untyped-variable index-untyped-variable)
-                                    ('variable         index-variable)
-                                    ('with-clause      index-with-clause)
-                                    (_ (error "Unknown category: %s" category))))
-                           (name (or (alist-get category gpr-ts-mode-imenu-category-name-alist)
-                                     (error "Unspecified category name for: %s" category))))
-                      (cons name index)))
-                  gpr-ts-mode-imenu-categories)))
-
-    ;; Remove empty categories
-    (seq-filter (lambda (i) (cdr i)) imenu-alist)))
+  (seq-keep
+   (lambda (category)
+     (when-let ((name (or (alist-get category gpr-ts-mode-imenu-category-name-alist)
+                          (error "Unspecified category name for: %s" category)))
+                (index (gpr-ts-mode-imenu-index category)))
+       (cons name index)))
+   gpr-ts-mode-imenu-categories))
 
 ;;;###autoload
 (define-derived-mode gpr-ts-mode prog-mode "GNAT Project"

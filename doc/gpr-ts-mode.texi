@@ -364,7 +364,7 @@ commands (i.e., @samp{forward-sexp}, @samp{forward-sentence}, etc).
 With the provided Imenu support, additional options are available for
 ease of navigation within a single GPR file.  Imenu supports indexing
 of attributes, packages, projects, type declarations, variable
-declarations and with clauses.
+declarations and with clauses.  Custom categories can also be defined.
 
 @defopt gpr-ts-mode-imenu-categories
 The set of categories to be used for Imenu.  Since there are a
@@ -392,6 +392,15 @@ sorting as specified by @samp{imenu-sort-function} as well as the category
 ordering specified in @samp{gpr-ts-mode-imenu-categories}, downstream
 functionality (such as completion candidates in the minibuffer) may
 rearrange the order of items.
+
+If none of the existing categories are sufficient, or an additional
+category is desired, a custom category can be created and used.  In
+order to create a category, a new category symbol should be added to
+@samp{gpr-ts-mode-imenu-categories}, a name mapping should be added to
+@samp{gpr-ts-mode-imenu-category-name-alist}, and an implementation of
+@samp{gpr-ts-mode-imenu-index} should be created, specializing on the new
+category symbol name.  Refer to existing instances of this function to
+understand how current category index functions are implemented.
 
 @node Troubleshooting
 @chapter Troubleshooting
