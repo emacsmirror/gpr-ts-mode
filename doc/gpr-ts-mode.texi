@@ -297,11 +297,18 @@ Continuation indentation for partial expressions (i.e., terms,
 concatenation, etc).
 @end defopt
 
-It should be noted that the settings above are defined in terms of
-each other, so that by customizing the standard indentation offset
-@code{gpr-ts-mode-indent-offset}, the other indentation offsets will be
-adjusted accordingly.  In other words, those settings either use the
-same value or a value derived from it.  Therefore, customizing the
+@defopt gpr-ts-mode-indent-strategy
+Indentation strategy to use, typically when @samp{RET} or @samp{TAB} are pressed
+during editing.  Historically, this would drive a line-based
+indentation, however more complex indentation strategies can be used
+due to the availability of the syntax tree.
+@end defopt
+
+It should be noted that the offsets defined above are described in
+terms of each other, so that by customizing the standard indentation
+offset @code{gpr-ts-mode-indent-offset}, the other indentation offsets will
+be adjusted accordingly.  In other words, those settings either use
+the same value or a value derived from it.  Therefore, customizing the
 base value will have an affect on the remaining values as well.  If
 this is not the desired outcome, the other offsets should be
 customized as well.
@@ -311,8 +318,8 @@ indentation will align stacked items under each other.  This applies
 to lists, function call parameters, import lists, discrete choice
 lists in case constructions, etc.
 
-Indentation rules used in gpr-ts-mode (as in all tree-sitter based
-modes) are based on the syntax of the language.  When what currently
+Indentation rules used in @code{gpr-ts-mode}, as in all tree-sitter based
+modes, are based on the syntax of the language.  When what currently
 exists in the buffer is not syntactically correct, the in-memory
 syntax tree will contain errors, since the buffer doesn't adhere to
 the grammar rules of the language (i.e., it contains syntax errors).
@@ -331,6 +338,23 @@ multi-line control constructs (e.g., project declarations, package
 declarations, case statements, etc.) are highly recommended.  Not only
 can this help keep your buffer closer to a syntactically correct
 state, you also benefit from the productivity gains as well.
+
+The indentation strategy can help recover from previously incorrect
+indentation that has occurred while the buffer was in a syntactically
+invalid state.  The default @code{declaration} setting for
+@samp{gpr-ts-mode-indent-strategy} will re-indent at the declaration level
+once the declaration is in a syntactically valid state.  When invalid
+syntax exists within a declaration, this strategy reverts back to
+``best effort'' line-based indentation.  Once the syntax becomes valid,
+indentation will be applied at the declaration level.
+
+If none of the existing indentation strategies are sufficient, a
+custom strategy can be created and used.  In order to create a
+strategy, a new strategy symbol should be specified in
+@samp{gpr-ts-mode-indent-strategy}, and an implementation of
+@samp{gpr-ts-mode-indent} should be created, specializing on the new strategy
+symbol name.  Refer to existing instances of this function to
+understand how current strategy functions are implemented.
 
 @node Navigation
 @chapter Navigation

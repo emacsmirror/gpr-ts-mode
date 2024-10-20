@@ -125,6 +125,15 @@
   :package-version "0.5.0")
 ;;;###autoload(put 'gpr-ts-mode-indent-exp-item-offset 'safe-local-variable #'integerp)
 
+(defcustom gpr-ts-mode-indent-strategy 'declaration
+  "Indentation strategy to utilize."
+  :type '(choice :tag "Indentation Strategy"
+                 (const :tag "Declaration" declaration)
+                 (const :tag "Line" line))
+  :group 'gpr-ts
+  :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
+  :package-version "0.6.0")
+
 (defcustom gpr-ts-mode-grammar "https://github.com/brownts/tree-sitter-gpr"
   "Configuration for downloading and installing the tree-sitter language grammar.
 
@@ -314,6 +323,50 @@ Return nil if no child of that type is found."
     (lambda (n)
       (equal (treesit-node-type n) type)))))
 
+(cl-defgeneric gpr-ts-mode-indent (strategy)
+  "Indent according to STRATEGY."
+  (error "Unknown indentation strategy: %s" strategy))
+
+(cl-defmethod gpr-ts-mode-indent ((_strategy (eql line)))
+  "Indent according to line STRATEGY."
+  (treesit-indent))
+
+(cl-defmethod gpr-ts-mode-indent ((_strategy (eql declaration)))
+  "Indent according to declaration STRATEGY."
+  (let ((initial-point-column (current-column))
+        (initial-indentation-column (current-indentation))
+        (region
+         (save-excursion
+           (forward-line 0)
+           (skip-chars-forward " \t")
+           (unless (looking-at (rx (* whitespace) eol) t)
+             (let* ((node (treesit-node-at (point)))
+                    (root (treesit-buffer-root-node))
+                    (candidate
+                     (treesit-parent-until
+                      node
+                      (lambda (node)
+                        (or (treesit-node-eq node root)
+                            (string-equal (treesit-node-type node) "ERROR")
+                            (gpr-ts-mode--declaration-p node)))
+                      'include-node)))
+               (when (and (gpr-ts-mode--declaration-p candidate)
+                          (not (treesit-search-subtree candidate "ERROR")))
+                 (cons (treesit-node-start candidate)
+                       (treesit-node-end candidate))))))))
+    (if region
+        (progn
+          (treesit-indent-region (car region) (cdr region))
+          ;; Move point if it was in the indentation.
+          (when (<= initial-point-column
+                    initial-indentation-column)
+            (back-to-indentation)))
+      (treesit-indent))))
+
+(defun gpr-ts-mode--indent-line ()
+  "Indent according to `gpr-ts-mode-indent-strategy'."
+  (gpr-ts-mode-indent gpr-ts-mode-indent-strategy))
+
 (defvar gpr-ts-mode--keywords
   '("abstract" "all" "at"
     "case"
@@ -463,7 +516,7 @@ Return nil if no child of that type is found."
            (gpr-ts-mode--sibling-exists-p "("))
       (gpr-ts-mode--anchor-first-sibling-matching "(")
       0)
-     ;; trival recovery for syntax error or unexpected broken line
+     ;; trivial recovery for syntax error or unexpected broken line
      (catch-all prev-line 0)))
   "Tree-sitter indent rules for `gpr-ts-mode'.")
 
@@ -620,6 +673,16 @@ Return nil if NODE is not an attribute declaration node."
   (when (gpr-ts-mode--attribute-declaration-p node)
     (gpr-ts-mode--tree-text node '("comment") "for" "use")))
 
+(defun gpr-ts-mode--case_construction-p (node)
+  "Determine if NODE is a case construction.
+Return non-nil to indicate it is."
+  (string-equal (treesit-node-type node) "case_construction"))
+
+(defun gpr-ts-mode--empty-declaration-p (node)
+  "Determine if NODE is an empty declaration.
+Return non-nil to indicate it is."
+  (string-equal (treesit-node-type node) "empty_declaration"))
+
 (defun gpr-ts-mode--package-declaration-p (node)
   "Determine if NODE is a package declaration.
 Return non-nil to indicate it is."
@@ -691,12 +754,27 @@ Return non-nil to indicate that it is."
   (and (gpr-ts-mode--variable-declaration-p node)
        (not (gpr-ts-mode--typed-variable-declaration-p node))))
 
+(defun gpr-ts-mode--with-declaration-p (node)
+  "Determine if NODE is a with declaration.
+Return non-nil to indicate that it is."
+  (string-equal (treesit-node-type node) "with_declaration"))
+
+(defun gpr-ts-mode--declaration-p (node)
+  "Determine if NODE is a declaration.
+Return non-nil to indicate that it is."
+  (or (gpr-ts-mode--attribute-declaration-p node)
+      (gpr-ts-mode--case_construction-p node)
+      (gpr-ts-mode--empty-declaration-p node)
+      (gpr-ts-mode--package-declaration-p node)
+      (gpr-ts-mode--project-declaration-p node)
+      (gpr-ts-mode--type-declaration-p node)
+      (gpr-ts-mode--variable-declaration-p node)
+      (gpr-ts-mode--with-declaration-p node)))
+
 (defun gpr-ts-mode--with-clause-name-p (node)
   "Determine if NODE is a string within a with clause."
-  (and (string-equal (treesit-node-type (treesit-node-parent node))
-                     "with_declaration")
-       (string-equal (treesit-node-type node)
-                     "string_literal")))
+  (and (gpr-ts-mode--with-declaration-p (treesit-node-parent node))
+       (string-equal (treesit-node-type node) "string_literal")))
 
 (defun gpr-ts-mode--imenu-index (tree item-p branch-p item-name-fn branch-name-fn)
   "Return Imenu index for a specific item category given TREE.
@@ -939,7 +1017,10 @@ the name of the branch given the branch node."
                 (attribute function number operator package variable)
                 (bracket delimiter error)))
 
-  (treesit-major-mode-setup))
+  (treesit-major-mode-setup)
+
+  ;; Override `treesit-major-mode-setup' settings.
+  (setq-local indent-line-function #'gpr-ts-mode--indent-line))
 
 ;;;###autoload
 (progn

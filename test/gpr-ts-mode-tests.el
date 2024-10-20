@@ -33,6 +33,7 @@
 If EXPECT-ERROR is non-nil, then check for an error in the parse tree,
 otherwise check that there is no error in the parse tree."
   (gpr-ts-mode)
+  (setq-local gpr-ts-mode-indent-strategy 'line)
   (if expect-error
       (should (treesit-search-subtree
                (treesit-buffer-root-node) "ERROR"))
