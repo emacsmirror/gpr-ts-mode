@@ -33,7 +33,6 @@
 If EXPECT-ERROR is non-nil, then check for an error in the parse tree,
 otherwise check that there is no error in the parse tree."
   (gpr-ts-mode)
-  (setq-local gpr-ts-mode-indent-strategy 'line)
   (if expect-error
       (should (treesit-search-subtree
                (treesit-buffer-root-node) "ERROR"))
@@ -151,6 +150,7 @@ If EXPECT-ERROR is non-nil, then check for an error in the parse tree,
 otherwise check that there is no error in the parse tree."
   (default-transform expect-error)
   (setq-local indent-tabs-mode nil)
+  (setq-local gpr-ts-mode-indent-strategy 'line)
   (call-interactively #'newline))
 
 (dolist (file (directory-files (ert-resource-directory)
