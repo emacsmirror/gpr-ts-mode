@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.6.0
+;; Version: 0.6.1
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -923,6 +923,7 @@ the name of the branch given the branch node."
 
 (defun gpr-ts-mode--imenu ()
   "Return Imenu alist for the current buffer."
+  (font-lock-ensure)
   (seq-keep
    (lambda (category)
      (when-let ((name (or (alist-get category gpr-ts-mode-imenu-category-name-alist)
