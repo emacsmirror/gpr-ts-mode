@@ -143,14 +143,18 @@ Use BINDING to navigate with optional prefix ARG."
   (let ((current-prefix-arg arg))
     (call-interactively (key-binding (kbd binding)))))
 
-(defun newline-transform (&optional expect-error)
+(defun newline-transform (&optional expect-error declaration)
   "Newline transform function for test.
 
 If EXPECT-ERROR is non-nil, then check for an error in the parse tree,
-otherwise check that there is no error in the parse tree."
+otherwise check that there is no error in the parse tree.  If
+DECLARATION is non-nil use declaration indentation strategy, otherwise
+use line indentation strategy."
   (default-transform expect-error)
   (setq-local indent-tabs-mode nil)
-  (setq-local gpr-ts-mode-indent-strategy 'line)
+  (if declaration
+      (setq-local gpr-ts-mode-indent-strategy 'declaration)
+    (setq-local gpr-ts-mode-indent-strategy 'line))
   (call-interactively #'newline))
 
 (dolist (file (directory-files (ert-resource-directory)

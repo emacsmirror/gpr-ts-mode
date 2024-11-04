@@ -1,0 +1,39 @@
+with "shared";
+
+project Test is
+   package Package_A is
+      -- ^           ^ font-lock-keyword-face
+      --   ^ font-lock-function-name-face
+   end Package_A;
+   -- <- font-lock-keyword-face
+   --  ^ font-lock-function-name-face
+   --           ^ font-lock-delimiter-face
+
+   package Package_B renames Shared.Package_B;
+   -- ^              ^ font-lock-keyword-face
+   --      ^ font-lock-function-name-face
+   --                        ^ nil
+   --                              ^         ^ font-lock-delimiter-face
+   --                               ^ font-lock-function-call-face
+
+   package Package_C extends Shared.Package_C is
+      -- ^           ^                        ^ font-lock-keyword-face
+      --   ^ font-lock-function-name-face
+      --                     ^ nil
+      --                           ^ font-lock-delimiter-face
+      --                            ^ font-lock-function-call-face
+   end Package_C;
+   -- <- font-lock-keyword-face
+   --  ^ font-lock-function-name-face
+   --           ^ font-lock-delimiter-face
+
+   package Different_Case is
+      --   ^ font-lock-function-name-face
+   end different_case;
+   --  ^ font-lock-function-name-face
+
+   package Mismatched is
+      --   ^ font-lock-function-name-face
+   end Doesnt_Match;
+   --  ^ nil
+end Test;

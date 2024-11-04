@@ -1,0 +1,16 @@
+Code: (lambda () (newline-transform 'expect-error 'declaration))
+
+Name: Incomplete package next to project "end"
+
+Point-Char: |
+
+=-=
+project Test is
+   package Package_A is|
+end Test;
+=-=
+project Test is
+package Package_A is
+   |
+end Test;
+=-=-=

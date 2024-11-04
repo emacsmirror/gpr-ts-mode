@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.6.1
+;; Version: 0.6.2
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -352,8 +352,15 @@ Return nil if no child of that type is found."
                       'include-node)))
                (when (and (gpr-ts-mode--declaration-p candidate)
                           (not (treesit-search-subtree candidate "ERROR")))
-                 (cons (treesit-node-start candidate)
-                       (treesit-node-end candidate))))))))
+                 ;; Prevent interpreting a project declaration "end"
+                 ;; next to an incomplete package declaration as a
+                 ;; valid package declaration by checking if the names
+                 ;; match.
+                 (unless
+                     (and (gpr-ts-mode--package-declaration-p candidate)
+                          (not (gpr-ts-mode--package-declaration-names-match-p candidate)))
+                   (cons (treesit-node-start candidate)
+                         (treesit-node-end candidate)))))))))
     (if region
         (progn
           (treesit-indent-region (car region) (cdr region))
@@ -541,8 +548,10 @@ Return nil if no child of that type is found."
    ;; Definition
    :language 'gpr
    :feature 'definition
-   '((package_declaration
-      [name: (identifier) endname: (identifier)] @font-lock-function-name-face)
+   '((package_declaration name: (identifier) @font-lock-function-name-face)
+     ((package_declaration endname: (identifier) @font-lock-function-name-face)
+      @package-declaration
+      (:pred gpr-ts-mode--package-declaration-names-match-p @package-declaration))
      (typed_string_declaration name: (identifier) @font-lock-type-face)
      (variable_declaration name: (identifier) @font-lock-variable-name-face)
      (attribute_declaration name: (identifier) @font-lock-property-name-face))
@@ -613,6 +622,14 @@ Return nil if no child of that type is found."
   (let ((identifier (downcase (treesit-node-text node t)))
         (packages (mapcar #'downcase gpr-ts-mode-package-names)))
     (seq-find (apply-partially #'string-equal identifier) packages)))
+
+(defun gpr-ts-mode--package-declaration-names-match-p (node)
+  "Check if names match in package declaration NODE."
+  (when (gpr-ts-mode--package-declaration-p node)
+    (let ((name (treesit-node-child-by-field-name node "name"))
+          (endname (treesit-node-child-by-field-name node "endname")))
+      (string-equal-ignore-case (treesit-node-text name t)
+                                (treesit-node-text endname t)))))
 
 
 ;;; Imenu
