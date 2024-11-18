@@ -271,7 +271,7 @@ end Colors;
 =-=
 abstract project Colors is
    type Value_Type is
-     |("Red", "Green",)
+   |("Red", "Green",)
 end Colors;
 =-=-=
 
@@ -289,7 +289,7 @@ end Colors;
 abstract project Colors is
    type Value_Type is ("Red",
                        "Green",
-                      |
+                       |
                       )
 end Colors;
 =-=-=
@@ -308,7 +308,7 @@ end Colors;
 abstract project Colors is
    type Value_Type is ( "Red",
                         "Green",
-                      |
+                        |
                       )
 end Colors;
 =-=-=

@@ -244,15 +244,19 @@ the in-memory syntax tree may not accurately reflect the language
 specific node) and indentation rules may not be applied when they
 should, due to these errors.
 
-To help combat this issue, it is suggested to use functionality that
-can help to reduce the number of syntax errors that might exist in the
-buffer at a particular point in time.  Functionality such as enabling
-=electric-pair-mode= to insert matching parenthesis, quotation marks,
-etc. or using snippets (e.g., [[https://github.com/brownts/gpr-yasnippets][gpr-yasnippets]]) to automatically insert
-multi-line control constructs (e.g., project declarations, package
-declarations, case statements, etc.) are highly recommended.  Not only
-can this help keep your buffer closer to a syntactically correct
-state, you also benefit from the productivity gains as well.
+To help combat this issue, specific indentation error recovery is used
+to help maintain indentation even when portions of the syntax are
+missing, which provides a best-effort approach to maintain accurate
+indentation.  To further increase indentation accuracy, it is
+suggested to use functionality that can help to reduce the number of
+syntax errors that might exist in the buffer at a particular point in
+time.  Functionality such as enabling =electric-pair-mode= to insert
+matching parenthesis, quotation marks, etc. or using snippets (e.g.,
+[[https://github.com/brownts/gpr-yasnippets][gpr-yasnippets]]) to automatically insert multi-line control constructs
+(e.g., project declarations, package declarations, case statements,
+etc.) are highly recommended.  Not only can this help keep your buffer
+closer to a syntactically correct state, you also benefit from the
+productivity gains as well.
 
 The indentation strategy can help recover from previously incorrect
 indentation that has occurred while the buffer was in a syntactically

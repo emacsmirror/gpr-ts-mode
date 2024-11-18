@@ -1,0 +1,391 @@
+Code: (lambda () (newline-transform 'expect-error))
+
+Name: Line 1
+
+Point-Char: |
+
+=-=
+project Hello_World is|
+=-=
+project Hello_World is
+   |
+=-=-=
+
+Name: Line 2
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+   |
+=-=-=
+
+Name: Line 3
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+   |
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   |
+=-=-=
+
+Name: Line 4
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   |
+=-=-=
+
+Name: Line 5
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+   |
+=-=-=
+
+Name: Line 6
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+   |
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   |
+=-=-=
+
+Name: Line 7
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      |
+=-=-=
+
+Name: Line 8
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         |
+=-=-=
+
+Name: Line 9
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            |
+=-=-=
+
+Name: Line 10
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+            |
+=-=-=
+
+Name: Line 11
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+            when "Release" =>|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            |
+=-=-=
+
+Name: Line 12
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;
+            |
+=-=-=
+
+Name: Line 13
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;
+            end case;|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;
+      end case;
+      |
+=-=-=
+
+Name: Line 14
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;
+      end case;
+      end Compiler;|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;
+      end case;
+   end Compiler;
+   |
+=-=-=
+
+Code: newline-transform
+
+Name: Line 15
+
+Point-Char: |
+
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;
+      end case;
+   end Compiler;
+   end Hello_World;|
+=-=
+project Hello_World is
+   for Main use ("hello_world");
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use ("-g");
+         when "Release" =>
+            null;
+      end case;
+   end Compiler;
+end Hello_World;
+|
+=-=-=
+
+Code: (lambda () (newline-transform 'expect-error))
+
+Name: Don't anchor to Project prefix
+
+=-=
+project Hello_World is
+   for Exec_Dir use Project'Project_Dir;|
+=-=
+project Hello_World is
+   for Exec_Dir use Project'Project_Dir;
+   |
+=-=-=
