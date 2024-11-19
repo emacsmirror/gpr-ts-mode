@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.6.3
+;; Version: 0.6.4
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -236,15 +236,15 @@ SYMBOL, else the default value is updated instead."
 (defun gpr-ts-mode--after-first-sibling-p (sibling)
   "Determine if the location of node comes after SIBLING."
   (lambda (_node parent bol &rest _)
-    (if-let ((sibling-node
-              (gpr-ts-mode--first-child-matching parent sibling)))
+    (if-let* ((sibling-node
+               (gpr-ts-mode--first-child-matching parent sibling)))
         (< (treesit-node-start sibling-node) bol))))
 
 (defun gpr-ts-mode--before-first-sibling-p (sibling)
   "Determine if the location of node comes before SIBLING."
   (lambda (_node parent bol &rest _)
-    (if-let ((sibling-node
-              (gpr-ts-mode--first-child-matching parent sibling)))
+    (if-let* ((sibling-node
+               (gpr-ts-mode--first-child-matching parent sibling)))
         (> (treesit-node-start sibling-node) bol))))
 
 (defun gpr-ts-mode--between-siblings-p (first-sibling last-sibling)
@@ -306,7 +306,7 @@ SYMBOL, else the default value is updated instead."
 (defun gpr-ts-mode--prev-sibling-matches-p (type)
   "Check if previous sibling matches TYPE."
   (lambda (node parent bol &rest _)
-    (if-let ((prev (gpr-ts-mode--prev-sibling node parent bol)))
+    (if-let* ((prev (gpr-ts-mode--prev-sibling node parent bol)))
         (string-equal (treesit-node-type prev) type))))
 
 (defun gpr-ts-mode--prev-nonextra-sibling-matches-p (type)
@@ -1162,9 +1162,9 @@ the name of the branch given the branch node."
   (font-lock-ensure)
   (seq-keep
    (lambda (category)
-     (when-let ((name (or (alist-get category gpr-ts-mode-imenu-category-name-alist)
-                          (error "Unspecified category name for: %s" category)))
-                (index (gpr-ts-mode-imenu-index category)))
+     (when-let* ((name (or (alist-get category gpr-ts-mode-imenu-category-name-alist)
+                           (error "Unspecified category name for: %s" category)))
+                 (index (gpr-ts-mode-imenu-index category)))
        (cons name index)))
    gpr-ts-mode-imenu-categories))
 
