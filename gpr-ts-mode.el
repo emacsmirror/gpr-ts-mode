@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.6.4
+;; Version: 0.6.5
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -326,7 +326,11 @@ If OP is nil or \\='anchor\\=', determine recovery anchor.  If OP is
     (let ((compound-alist
            `(("when"    . ( :compound-type "case_item"))
              ("case"    . ( :compound-type "case_construction"
-                            :offset gpr-ts-mode-indent-when-offset))
+                            :offset
+                            (lambda (_anchor)
+                              (if (and ,node (string-equal (treesit-node-type ,node) "end"))
+                                  0
+                                gpr-ts-mode-indent-when-offset))))
              ("package" . ( :compound-type "package_declaration"
                             :offset
                             (lambda (_anchor)
@@ -588,9 +592,10 @@ Return nil if no child of that type is found."
       (gpr-ts-mode--anchor-first-sibling-matching "case_item")
       gpr-ts-mode-indent-offset)
 
-     ;; Parent ERROR recovery rules.
+     ;; Error recovery rules.
 
      ((and (or (parent-is "ERROR")
+               (node-is "ERROR")
                (gpr-ts-mode--prev-sibling-matches-p "ERROR"))
            (gpr-ts-mode--indent-error-recovery-exists-p))
       (gpr-ts-mode--anchor-of-indent-error-recovery)

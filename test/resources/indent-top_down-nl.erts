@@ -389,3 +389,65 @@ project Hello_World is
    for Exec_Dir use Project'Project_Dir;
    |
 =-=-=
+
+Name: Handle next sibling being an ERROR node
+
+=-=
+project Hello_World is
+   package Binder is
+      for Default_Switches ("Ada") use|
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-g");
+   end Compiler;
+end Hello_World;
+=-=
+project Hello_World is
+   package Binder is
+      for Default_Switches ("Ada") use
+      |
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-g");
+   end Compiler;
+end Hello_World;
+=-=-=
+
+Name: Anchor "end" to project
+
+=-=
+project Hello_World is
+   end|
+=-=
+project Hello_World is
+end
+   |
+=-=-=
+
+Name: Anchor "end" to package
+
+=-=
+project Hello_World is
+   package Compiler is
+      end|
+=-=
+project Hello_World is
+   package Compiler is
+   end
+      |
+=-=-=
+
+Name: Anchor "end" to case
+
+=-=
+project Hello_World is
+   package Compiler is
+      case Build is
+         end|
+=-=
+project Hello_World is
+   package Compiler is
+      case Build is
+      end
+         |
+=-=-=
