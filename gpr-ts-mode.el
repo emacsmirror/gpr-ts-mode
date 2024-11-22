@@ -1281,6 +1281,7 @@ the name of the branch given the branch node."
    gpr-ts-mode-imenu-categories))
 
 (require 'gpr-ts-casing)
+(require 'gpr-ts-completion)
 
 ;;;###autoload
 (define-derived-mode gpr-ts-mode prog-mode "GNAT Project"
@@ -1367,6 +1368,9 @@ the name of the branch given the branch node."
                 (keyword string type)
                 (attribute function number operator package variable)
                 (bracket delimiter error)))
+
+  ;; Completion.
+  (add-hook 'completion-at-point-functions #'gpr-ts-mode--completion-at-point nil t)
 
   (treesit-major-mode-setup)
 
