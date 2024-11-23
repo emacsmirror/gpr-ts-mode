@@ -4,6 +4,8 @@ Name: Basic
 with "shared.gpr";
 
 project Hello_World is
+   type Value_Type is ("Red", "Green");
+
    for Main use ("hello_world.adb");
 
    for Object_Dir use Project'Project_Dir & "obj";
@@ -29,6 +31,16 @@ with
 project
   Hello_World
 is
+   type
+     Value_Type
+   is
+     (
+      "Red"
+      ,
+      "Green"
+     )
+   ;
+
    for
      Main
    use

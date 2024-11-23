@@ -228,6 +228,44 @@ abstract project Colors is
 end Colors;
 =-=-=
 
+Name: Invalid Syntax: Missing last item (stacked)
+
+Point-Char: |
+
+=-=
+abstract project Colors is
+   type Value_Type is ("Red",
+                       "Green",|
+                      );
+end Colors;
+=-=
+abstract project Colors is
+   type Value_Type is ("Red",
+                       "Green",
+                       |
+                      );
+end Colors;
+=-=-=
+
+Name: Invalid Syntax: Missing last item (stacked, leading space)
+
+Point-Char: |
+
+=-=
+abstract project Colors is
+   type Value_Type is ( "Red",
+                        "Green",|
+                      );
+end Colors;
+=-=
+abstract project Colors is
+   type Value_Type is ( "Red",
+                        "Green",
+                        |
+                      );
+end Colors;
+=-=-=
+
 Code: (lambda () (newline-transform 'expect-error))
 
 Name: Invalid Syntax: Empty list, missing semicolon

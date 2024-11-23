@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.6.5
+;; Version: 0.6.6
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -245,10 +245,12 @@ SYMBOL, else the default value is updated instead."
   (lambda (_node parent bol &rest _)
     (if-let* ((sibling-node
                (gpr-ts-mode--first-child-matching parent sibling)))
-        (> (treesit-node-start sibling-node) bol))))
+        (> (treesit-node-start sibling-node) bol)
+      ;; if it doesn't exist, node is before it
+      t)))
 
 (defun gpr-ts-mode--between-siblings-p (first-sibling last-sibling)
-  "Deterine if node is between FIRST-SIBLING and LAST-SIBLING."
+  "Determine if node is between FIRST-SIBLING and LAST-SIBLING."
   (lambda (node parent bol &rest _)
     (let ((after (gpr-ts-mode--after-first-sibling-p first-sibling))
           (before (gpr-ts-mode--before-first-sibling-p last-sibling)))
@@ -364,7 +366,7 @@ If OP is nil or \\='anchor\\=', determine recovery anchor.  If OP is
                                   (not (or
                                         (gpr-ts-mode--declaration-p ,node)
                                         (member (treesit-node-type ,node)
-                                                '("ERROR" "when" "case" "package" "end"))))))
+                                                '("when" "case" "package" "end"))))))
                             :matching-pair ")"
                             :offset
                             (lambda (anchor)
@@ -505,11 +507,13 @@ If OP is nil or \\='anchor\\=', determine recovery anchor.  If OP is
 (defun gpr-ts-mode--first-child-matching (parent type)
   "Find first child of PARENT matching TYPE.
 Return nil if no child of that type is found."
-  (car
-   (treesit-filter-child
-    parent
-    (lambda (n)
-      (equal (treesit-node-type n) type)))))
+  ;; NOTE: `treesit-filter-child' uses `treesit-node-next-sibling'
+  ;; which doesn't traverse parser-inserted "missing" nodes (seems
+  ;; like a bug), so filter the nodes manually.
+  (seq-find
+   (lambda (n)
+     (string-equal (treesit-node-type n) type))
+   (treesit-node-children parent)))
 
 (cl-defgeneric gpr-ts-mode-indent (strategy)
   "Indent according to STRATEGY."
@@ -607,33 +611,49 @@ Return nil if no child of that type is found."
      ;; many rules that follow assume a valid parent node and don't
      ;; explicitly check.
      ((parent-is "ERROR") column-0 0)
+     ((node-is "ERROR") prev-line 0)
 
      ;; Normal indentation rules.
 
+     ((and (parent-is "case_construction")
+           (gpr-ts-mode--between-siblings-p "is" "end"))
+      parent
+      gpr-ts-mode-indent-when-offset)
+     ;; general indentation for package and project declaration bodies.
+     ((and (or (parent-is "project_declaration")
+               (parent-is "package_declaration"))
+           (gpr-ts-mode--between-siblings-p "is" "end"))
+      parent
+      gpr-ts-mode-indent-offset)
+     ;; general indentation for comment.
+     ;;
+     ;; NOTE: Indent to where next non-comment sibling would be
+     ;; indented.  This may not be aligned to sibling if sibling isn't
+     ;; properly indented, however it prevents a two-pass indentation
+     ;; when region is indented, since comments won't have to be
+     ;; reindented once sibling becomes properly aligned.
+     ((and (node-is "comment")
+           (gpr-ts-mode--next-sibling-not-matching-exists-p "comment"))
+      (gpr-ts-mode--anchor-of-next-sibling-not-matching "comment")
+      (gpr-ts-mode--offset-of-next-sibling-not-matching "comment"))
+     ((and (node-is ")")
+           (gpr-ts-mode--sibling-exists-p "("))
+      (gpr-ts-mode--anchor-first-sibling-matching "(")
+      0)
      ;; top-level
      ((parent-is ,(rx bos "project" eos)) column-0 0)
      ;; with_declaration
      ((and (parent-is "with_declaration")
-           (or (node-is "string_literal")
-               no-node
-               (node-is ","))
+           (gpr-ts-mode--between-siblings-p "with" ";")
            (gpr-ts-mode--after-first-sibling-p "string_literal"))
       (gpr-ts-mode--anchor-first-sibling-matching "string_literal")
       0)
-     ;; associative_array_index
-     ((node-is "associative_array_index")
-      (gpr-ts-mode--anchor-first-sibling-matching "(")
-      1)
      ;; expression / expression_list
      ((and (parent-is "expression_list")
-           (or (node-is ,(rx bos "expression" eos))
-               no-node
-               (node-is ","))
            (gpr-ts-mode--after-first-sibling-p "expression"))
       (gpr-ts-mode--anchor-first-sibling-matching "expression")
       0)
-     ((and (parent-is "expression_list")
-           (node-is ,(rx bos "expression" eos)))
+     ((parent-is "expression_list")
       (gpr-ts-mode--anchor-first-sibling-matching "(")
       1)
      ((parent-is ,(rx bos "expression" eos))
@@ -651,18 +671,18 @@ Return nil if no child of that type is found."
       gpr-ts-mode-indent-broken-offset)
      ;; typed_string_declaration
      ((and (parent-is "typed_string_declaration")
-           (or (node-is "string_literal")
-               (node-is ","))
+           (gpr-ts-mode--between-siblings-p "(" ")")
            (gpr-ts-mode--after-first-sibling-p "string_literal"))
       (gpr-ts-mode--anchor-first-sibling-matching "string_literal")
       0)
-     ((match "string_literal" "typed_string_declaration")
+     ((and (parent-is "typed_string_declaration")
+           (gpr-ts-mode--between-siblings-p "(" ")"))
       (gpr-ts-mode--anchor-first-sibling-matching "(")
       1)
-     ;; attribute_reference
-     ((and (parent-is "attribute_reference")
-           (or (node-is "string_literal")
-               (node-is "others")))
+     ;; attribute_reference / attribute_declaration
+     ((and (or (parent-is "attribute_reference")
+               (parent-is "attribute_declaration"))
+           (gpr-ts-mode--between-siblings-p "(" ")"))
       (gpr-ts-mode--anchor-first-sibling-matching "(")
       1)
      ;; attribute_declaration
@@ -677,39 +697,20 @@ Return nil if no child of that type is found."
      ((node-is "discrete_choice_list")
       parent
       gpr-ts-mode-indent-broken-offset)
-     ((node-is "case_item")
-      parent-bol
-      gpr-ts-mode-indent-when-offset)
      ((parent-is "case_item")
       parent-bol
       gpr-ts-mode-indent-offset)
      ((match "variable_reference" "case_construction")
       parent-bol
       gpr-ts-mode-indent-broken-offset)
-     ((and (parent-is "case_construction")
-           no-node
-           (gpr-ts-mode--between-siblings-p "case_item" "end"))
-      (gpr-ts-mode--anchor-prev-sibling-matching "case_item")
-      gpr-ts-mode-indent-offset)
-     ((and (parent-is "case_construction")
-           (or no-node (node-is "comment"))
-           (gpr-ts-mode--between-siblings-p "is" "end"))
-      parent
-      gpr-ts-mode-indent-when-offset)
-     ;; general indentation for package and project declaration bodies.
-     ((and (or (parent-is "project_declaration")
-               (parent-is "package_declaration"))
-           (gpr-ts-mode--between-siblings-p "is" "end"))
-      parent
-      gpr-ts-mode-indent-offset)
-     ;; general indentation for newline and comments.
+     ;; general indentation for newline.
      ;;
      ;; NOTE: Indent to where next non-comment sibling would be
      ;; indented.  This may not be aligned to sibling if sibling isn't
      ;; properly indented, however it prevents a two-pass indentation
      ;; when region is indented, since comments won't have to be
      ;; reindented once sibling becomes properly aligned.
-     ((and (or no-node (node-is "comment"))
+     ((and no-node
            (gpr-ts-mode--next-sibling-not-matching-exists-p "comment"))
       (gpr-ts-mode--anchor-of-next-sibling-not-matching "comment")
       (gpr-ts-mode--offset-of-next-sibling-not-matching "comment"))
@@ -720,12 +721,6 @@ Return nil if no child of that type is found."
      ;; name (e.g., identifier . identifier)
      ((parent-is ,(rx bos "name" eos))
       parent
-      0)
-     ;; error recovery for string lists with syntax errors
-     ((and (or (node-is "string_literal")
-               (node-is ","))
-           (gpr-ts-mode--after-first-sibling-p "string_literal"))
-      (gpr-ts-mode--anchor-first-sibling-matching "string_literal")
       0)
      ;; name, identifier, string_literal and string_literal_at.
      ((or (node-is ,(rx bos "name" eos))
@@ -742,12 +737,7 @@ Return nil if no child of that type is found."
       0)
      ;; non-expression opening parenthesis
      ((node-is "(") parent gpr-ts-mode-indent-broken-offset)
-     ;; closing parenthesis (including expression)
-     ((and (node-is ")")
-           (gpr-ts-mode--sibling-exists-p "("))
-      (gpr-ts-mode--anchor-first-sibling-matching "(")
-      0)
-     ;; trivial recovery for syntax error or unexpected broken line
+     ;; trivial recovery for unexpected broken line
      (catch-all prev-line 0)))
   "Tree-sitter indent rules for `gpr-ts-mode'.")
 
