@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.6.6
+;; Version: 0.6.7
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -223,6 +223,22 @@ SYMBOL, else the default value is updated instead."
 
 (add-variable-watcher 'gpr-ts-mode-indent-offset #'gpr-ts-mode--indent-recompute)
 
+(defvar gpr-ts-mode--keywords
+  '("abstract" "all" "at"
+    "case"
+    "end" "extends" "external" "external_as_list"
+    "for"
+    "is"
+    "limited"
+    "null"
+    "others"
+    "package" ;"project"
+    "renames"
+    "type"
+    "use"
+    "when" "with")
+  "GPR keywords for tree-sitter font-locking.")
+
 (defun gpr-ts-mode--anchor-first-sibling-matching (type)
   "Position of first sibling of node whose type matches TYPE."
   (lambda (_n parent &rest _)
@@ -320,156 +336,282 @@ SYMBOL, else the default value is updated instead."
       (when prev
         (string-equal (treesit-node-type prev) type)))))
 
-(defun gpr-ts-mode--indent-error-recovery (&optional op)
-  "Look for nearest indent error recovery point.
-If OP is nil or \\='anchor\\=', determine recovery anchor.  If OP is
-\\='offset\\=', determine recovery offset."
-  (lambda (node parent bol &rest _)
-    (let ((compound-alist
-           `(("when"    . ( :compound-type "case_item"))
-             ("case"    . ( :compound-type "case_construction"
-                            :offset
-                            (lambda (_anchor)
-                              (if (and ,node (string-equal (treesit-node-type ,node) "end"))
-                                  0
-                                gpr-ts-mode-indent-when-offset))))
-             ("package" . ( :compound-type "package_declaration"
-                            :offset
-                            (lambda (_anchor)
-                              (if (and ,node (string-equal (treesit-node-type ,node) "end"))
-                                  0
-                                gpr-ts-mode-indent-offset))))
-             ("project" . ( :compound-type "project_declaration"
-                            :predicate
-                            (lambda (n)
-                              (let* ((next (treesit-node-next-sibling n))
-                                     (next-type (treesit-node-type next)))
-                                (or (null next-type)
-                                    (not (string-equal next-type "'")))))
-                            ;; Anchor at beginning of line to account
-                            ;; for possible qualifier prefixes (e.g.,
-                            ;; "abstract")
-                            :offset
-                            (lambda (_anchor)
-                              (if (and ,node (string-equal (treesit-node-type ,node) "end"))
-                                  0
-                                gpr-ts-mode-indent-offset))
-                            :anchor-bol t))
-             ("("       . ( :compound-type ("attribute_reference"
-                                            "expression_list"
-                                            "typed_string_declaration"
-                                            "attribute_declaration")
-                            :predicate
-                            (lambda (_n)
-                              (or (null ,node)
-                                  ;; Recovery point.
-                                  (not (or
-                                        (gpr-ts-mode--declaration-p ,node)
-                                        (member (treesit-node-type ,node)
-                                                '("when" "case" "package" "end"))))))
-                            :matching-pair ")"
-                            :offset
-                            (lambda (anchor)
-                              (if (and ,node (string-equal (treesit-node-type ,node) ")"))
-                                  0
-                                (let ((anchor-column
-                                       (save-excursion
-                                         (goto-char (treesit-node-start anchor))
-                                         (current-column)))
-                                      (next anchor))
-                                  (while (and next
-                                              (or (treesit-node-eq next anchor)
-                                                  ;; skip comments
-                                                  (treesit-node-check next 'extra)))
-                                    (save-excursion
-                                      (goto-char (treesit-node-end next))
-                                      (skip-chars-forward " \t\n" ,bol)
-                                      (if (>= (point) ,bol)
-                                          (setq next nil)
-                                        (setq next (treesit-node-at (point))))))
-                                  (if next
-                                      (let ((anchor-column
-                                             (save-excursion
-                                               (goto-char (treesit-node-start anchor))
-                                               (current-column))))
-                                        (save-excursion
-                                          (goto-char (treesit-node-start next))
-                                          (- (current-column) anchor-column)))
-                                    1))))))))
-          (matches nil))
-      (while (and parent (not matches))
-        (setq matches
-              (treesit-induce-sparse-tree
-               parent
-               (lambda (candidate)
-                 (when (< (treesit-node-start candidate) bol)
-                   (if-let* ((type (treesit-node-type candidate))
-                             (entry (alist-get type compound-alist nil nil #'equal))
-                             ((let ((predicate (plist-get entry :predicate)))
-                                (or (null predicate)
-                                    (funcall predicate candidate))))
-                             (parent (treesit-node-parent candidate))
-                             (parent-type (treesit-node-type parent))
-                             (compound-type (ensure-list (plist-get entry :compound-type))))
-                       (let ((matching-pair (plist-get entry :matching-pair)))
-                         (cond
-                          ;; intact compound, no matching pair
-                          ((and (member parent-type compound-type)
-                                (not matching-pair))
-                           (and (<= (treesit-node-start parent) bol)
-                                (< bol (treesit-node-end parent))))
-                          ;; broken compound, no matching pair
-                          ((and (not (member parent-type compound-type))
-                                (not matching-pair))
-                           t)
-                          ;; matching pair, but not before BOL
-                          ((null
-                            (treesit-filter-child
-                             parent
-                             (lambda (n)
-                               (and (string-equal (treesit-node-type n)
-                                                  matching-pair)
-                                    (< (treesit-node-start candidate)
-                                       (treesit-node-start n)
-                                       bol)))))))))))
-               (pcase op
-                 ('offset
-                  (lambda (candidate)
-                    (let* ((type (treesit-node-type candidate))
-                           (entry (alist-get type compound-alist nil nil #'equal)))
-                      (let ((offset (plist-get entry :offset)))
-                        (pcase offset
-                          ((pred null)      gpr-ts-mode-indent-offset)
-                          ((pred functionp) (funcall offset candidate))
-                          ((pred integerp)  offset)
-                          ((pred symbolp)   (symbol-value offset))
-                          (_                (error "Unknown offset: %s" offset)))))))
-                 ((or 'anchor 'test (pred null))
-                  (lambda (candidate)
-                    (let* ((type (treesit-node-type candidate))
-                           (entry (alist-get type compound-alist nil nil #'equal))
-                           (anchor-bol (plist-get entry :anchor-bol)))
-                      (if anchor-bol
-                          (save-excursion
-                            (goto-char (treesit-node-start candidate))
-                            (forward-line 0)
-                            (treesit-node-at (point))
-                            (if (eq op 'test)
-                                (treesit-node-at (point))
-                              (treesit-node-start (treesit-node-at (point)))))
-                        (if (eq op 'test)
-                            candidate
-                          (treesit-node-start candidate))))))
-                 (_ (error "Unknown operation: %s" op)))
-               nil))
-        (setq parent (treesit-node-parent parent)))
-      ;; Pick the match which is closest to point
-      (if (eq op 'test)
-          matches
-        (caar (reverse matches))))))
+(defun gpr-ts-mode--enclosing-compound (compound-info pos)
+  "Find enclosing compound, specified in COMPOUND-INFO, at POS.
 
-(defalias 'gpr-ts-mode--indent-error-recovery-exists-p
-  'gpr-ts-mode--indent-error-recovery)
+COMPOUND-INFO is a list of compound node information.  Each entry should
+be of the form (FIRST-CHILD-NODE-TYPE . PROPS), where
+FIRST-CHILD-NODE-TYPE is the type of the first child node of the
+compound node.  PROPS should have the form:
+
+   [KEYWORD VALUE]...
+
+The following keywords are meaningful:
+
+:compound-type
+
+   VALUE must be the type of the compound node.  This is a required
+   property.
+
+:predicate
+
+   VALUE must be a function which takes a candidate node (matching
+   FIRST-CHILD-NODE-TYPE) as well as the node at POS, if one exists, and
+   returns non-nil if the candidate is appropriate.  This is an optional
+   property.
+
+The returned node is the closest previous node matching
+FIRST-CHILD-NODE-TYPE which is a child of the specified compound node
+type and the compound node must enclose POS.
+
+The returned node may also be the closest previous node matching
+FIRST-CHILD-NODE-TYPE which is not a child of the specified compound
+node.  This is a suspected incomplete compound.  When a predicate is
+provided, it is used to disambiguate any usage of FIRST-CHILD-NODE-TYPE
+elsewhere in the grammar and must return non-nil for the node to be
+chosen."
+  (let* ((matches nil)
+         (node
+          (save-excursion
+            (goto-char pos)
+            (if-let* ((node (treesit-node-at pos)))
+                (and (<= (treesit-node-start node) pos)
+                     (> (treesit-node-end node) pos)
+                     node))))
+         (parent
+          (if node
+              (treesit-node-parent node)
+            (treesit-node-on pos pos))))
+    (while (and parent (not matches))
+      (setq matches
+            (treesit-induce-sparse-tree
+             parent
+             (lambda (candidate)
+               (when-let* (((< (treesit-node-start candidate) pos))
+                           (type (treesit-node-type candidate))
+                           (parent (treesit-node-parent candidate))
+                           (parent-type (treesit-node-type parent))
+                           (compound (cdr (assoc-string type compound-info)))
+                           (compound-type (plist-get compound :compound-type)))
+                 (if (string-equal parent-type compound-type)
+                     (and (<= (treesit-node-start parent) pos)
+                          (< pos (treesit-node-end parent)))
+                   (let ((predicate (plist-get compound :predicate)))
+                     (or (null predicate)
+                         (funcall predicate candidate node))))))))
+      (setq parent (treesit-node-parent parent)))
+    (when matches
+      (caar (reverse matches)))))
+
+(defun gpr-ts-mode--indent-error-recovery (op)
+  "Find indentation in the presence of syntax errors.
+
+If OP is \\='anchor\\=', determine anchor.  If OP is \\='offset\\=',
+determine offset."
+  (lambda (node _parent bol &rest _)
+    (let ((node-type
+           (let ((type (treesit-node-type node)))
+             (when (and type (string-equal type "ERROR"))
+               ;; Replace ERROR node with leaf node.
+               (setq node (treesit-node-at (treesit-node-start node)))
+               (setq type (treesit-node-type node)))
+             type))
+          anchor-node anchor-type)
+      ;; look for enclosing parenthesis or declaration.
+      (let (force-compound prev-node prev-type)
+        (save-excursion
+          (goto-char bol)
+          (while (and (not anchor-node)
+                      (not force-compound)
+                      (not (bobp)))
+            (when prev-node
+              (goto-char (treesit-node-start prev-node)))
+            (skip-chars-backward " \t\n" (point-min))
+            (setq prev-node (if (bobp) nil (treesit-node-at (1- (point))))
+                  prev-type (treesit-node-type prev-node))
+            (cond
+             ;; parenthesis
+             ((and prev-type (string-equal prev-type "("))
+              (let ((end
+                     (ignore-error scan-error
+                       (scan-lists (treesit-node-start prev-node) 1 0))))
+                (when (or (null end)
+                          (> end bol))
+                  ;; End parenthesis either not found (i.e.,
+                  ;; unbalanced) or it was after bol, so it encloses
+                  ;; bol.
+                  (if (and node (member node-type '("project" "package" "case")))
+                      (setq force-compound t) ; Recovery point
+                    (setq anchor-node prev-node
+                          anchor-type prev-type)))))
+             ;; declaration
+             ((and (or (null prev-type)
+                       (member prev-type '(";" "=>"))
+                       (and (string-equal prev-type "is")
+                            ;; Only consider the "is" keyword as a
+                            ;; declaration separator when it's part of a
+                            ;; compound (e.g., project_declaration),
+                            ;; otherwise ignore it when it isn't (e.g.,
+                            ;; typed_string_declaration).
+                            (let ((keywords (cons "project" gpr-ts-mode--keywords))
+                                  (compound-keywords '("project" "package" "case"))
+                                  (keyword-node prev-node)
+                                  (keyword-type prev-type))
+                              (save-excursion
+                                (while (and keyword-node
+                                            (or (treesit-node-eq keyword-node prev-node)
+                                                (not (member keyword-type keywords))))
+                                  (goto-char (treesit-node-start keyword-node))
+                                  (skip-chars-backward " \t\n")
+                                  (if (bobp)
+                                      (setq keyword-node nil)
+                                    (setq keyword-node (treesit-node-at (1- (point)))
+                                          keyword-type (treesit-node-type keyword-node)))))
+                              (and keyword-node
+                                   (member keyword-type compound-keywords))))))
+              (let (next-node next-type)
+                (save-excursion
+                  (skip-chars-forward " \t\n")
+                  (setq next-node (if (eobp) nil (treesit-node-at (point)))
+                        next-type (treesit-node-type next-node))
+                  (while (and next-type
+                              (string-equal next-type "comment"))
+                    (goto-char (treesit-node-end next-node))
+                    (skip-chars-forward " \t\n")
+                    (setq next-node (if (eobp) nil (treesit-node-at (point)))
+                          next-type (treesit-node-type next-node)))
+                  (if next-node
+                      (if (>= (treesit-node-start next-node) bol)
+                          ;; bol is either a newline or a comment,
+                          ;; so anchor to the compound.
+                          (setq force-compound t)
+                        (setq anchor-node next-node
+                              anchor-type next-type))
+                    (setq force-compound t)))))))))
+      ;; look for enclosing compound
+      (unless anchor-node
+        (setq anchor-node
+              (gpr-ts-mode--enclosing-compound
+               '(("project" . ( :compound-type "project_declaration"
+                                :predicate
+                                ;; Don't anchor to a "project" keyword
+                                ;; used in an attribute reference.
+                                (lambda (anchor &optional _node)
+                                  (let* ((next (treesit-node-next-sibling anchor))
+                                         (next-type (treesit-node-type next)))
+                                    (or (null next-type)
+                                        (not (string-equal next-type "'")))))))
+                 ("package" . ( :compound-type "package_declaration"
+                                :predicate
+                                ;; Don't allow a nested "package".
+                                ;; This is an indication of an
+                                ;; incomplete package declaration
+                                ;; prior to the start of another
+                                ;; package declaration.
+                                (lambda (_anchor &optional node)
+                                  (or (null node)
+                                      (let ((type (treesit-node-type node)))
+                                        (not (string-equal type "package")))))))
+                 ("case"    . ( :compound-type "case_construction"))
+                 ("when"    . ( :compound-type "case_item")))
+               bol)
+              anchor-type (treesit-node-type anchor-node)))
+      (if (null anchor-node)
+          (pcase op
+            ((or (pred null) 'anchor)
+             (when treesit--indent-verbose
+               (message "Error recovery anchor: %s" anchor-node))
+             (pos-bol))
+            ('offset 0))
+        (pcase op
+          ((or (pred null) 'anchor)
+           (when treesit--indent-verbose
+             (message "Error recovery anchor: %s" anchor-node))
+           (if (string-equal anchor-type "project")
+               ;; Anchor at beginning of line to account for possible
+               ;; qualifier prefixes (e.g., "abstract")
+               (save-excursion
+                 (goto-char (treesit-node-start anchor-node))
+                 (forward-line 0)
+                 (treesit-node-start (treesit-node-at (point))))
+             (treesit-node-start anchor-node)))
+          ('offset
+           ;; Determine nodes after anchor and before bol
+           (let ((zero-offset-types
+                  (append '(";" "project")
+                          (seq-difference
+                           gpr-ts-mode--keywords
+                           '("external" "external_as_list"))))
+                 nodes-before)
+             (save-excursion
+               (goto-char (treesit-node-end anchor-node))
+               (while (< (point) bol)
+                 (skip-chars-forward " \t\n" bol)
+                 (when (< (point) bol)
+                   (let ((node (treesit-node-at (point))))
+                     ;; Find largest complete node starting at point.
+                     (setq node
+                           (or
+                            (treesit-parent-while
+                             node
+                             (lambda (n)
+                               (and
+                                (not (string-equal (treesit-node-type n) "ERROR"))
+                                (= (treesit-node-start n) (point)))))
+                            node))
+                     (push (treesit-node-type node) nodes-before)
+                     (goto-char (treesit-node-end node))))))
+             (setq nodes-before (reverse nodes-before))
+             (pcase anchor-type
+               ("when"
+                (cond
+                 ((member "=>" nodes-before) gpr-ts-mode-indent-offset)
+                 (t gpr-ts-mode-indent-broken-offset)))
+               ("case"
+                (cond
+                 ((and (member "is" nodes-before)
+                       (not (member "end" nodes-before))
+                       (or (null node) (not (string-equal node-type "end"))))
+                  gpr-ts-mode-indent-when-offset)
+                 ((and node (member node-type zero-offset-types))
+                  0)
+                 (t gpr-ts-mode-indent-broken-offset)))
+               ((or "package" "project")
+                (cond
+                 ((and (member "is" nodes-before)
+                       (not (member "end" nodes-before))
+                       (or (null node) (not (string-equal node-type "end"))))
+                  gpr-ts-mode-indent-offset)
+                 ((and node (member node-type zero-offset-types))
+                  0)
+                 (t gpr-ts-mode-indent-broken-offset)))
+               ("("
+                (if (and node-type (string-equal node-type ")"))
+                    0
+                  (let ((next-node anchor-node))
+                    (while (and next-node
+                                (or (treesit-node-eq next-node anchor-node)
+                                    ;; skip comments
+                                    (string-equal (treesit-node-type next-node) "comment")))
+                      (save-excursion
+                        (goto-char (treesit-node-end next-node))
+                        (skip-chars-forward " \t\n" bol)
+                        (if (>= (point) bol)
+                            (setq next-node nil)
+                          (setq next-node (treesit-node-at (point))))))
+                    (if next-node
+                        (let ((anchor-column
+                               (save-excursion
+                                 (goto-char (treesit-node-start anchor-node))
+                                 (current-column))))
+                          (save-excursion
+                            (goto-char (treesit-node-start next-node))
+                            (- (current-column) anchor-column)))
+                      1))))
+               (_ ; declaration
+                (if (and node (member node-type zero-offset-types))
+                    0
+                  gpr-ts-mode-indent-broken-offset))))))))))
 
 (defun gpr-ts-mode--anchor-of-indent-error-recovery ()
   "Determine indentation anchor of error recovery point."
@@ -566,22 +708,6 @@ Return nil if no child of that type is found."
   "Indent according to `gpr-ts-mode-indent-strategy'."
   (gpr-ts-mode-indent gpr-ts-mode-indent-strategy))
 
-(defvar gpr-ts-mode--keywords
-  '("abstract" "all" "at"
-    "case"
-    "end" "extends" "external" "external_as_list"
-    "for"
-    "is"
-    "limited"
-    "null"
-    "others"
-    "package" ;"project"
-    "renames"
-    "type"
-    "use"
-    "when" "with")
-  "GPR keywords for tree-sitter font-locking.")
-
 (defvar gpr-ts-mode--indent-rules
   `((gpr
 
@@ -598,20 +724,11 @@ Return nil if no child of that type is found."
 
      ;; Error recovery rules.
 
-     ((and (or (parent-is "ERROR")
-               (node-is "ERROR")
-               (gpr-ts-mode--prev-sibling-matches-p "ERROR"))
-           (gpr-ts-mode--indent-error-recovery-exists-p))
+     ((or (parent-is "ERROR")
+          (node-is "ERROR")
+          (gpr-ts-mode--prev-sibling-matches-p "ERROR"))
       (gpr-ts-mode--anchor-of-indent-error-recovery)
       (gpr-ts-mode--offset-of-indent-error-recovery))
-
-     ;; When previous parent error recovery fails, likely a top-level
-     ;; construct so anchor to the first column without an offset.
-     ;; This is a catch-all for any remaining parent ERROR nodes as
-     ;; many rules that follow assume a valid parent node and don't
-     ;; explicitly check.
-     ((parent-is "ERROR") column-0 0)
-     ((node-is "ERROR") prev-line 0)
 
      ;; Normal indentation rules.
 

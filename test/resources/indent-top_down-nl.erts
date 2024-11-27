@@ -405,7 +405,7 @@ end Hello_World;
 project Hello_World is
    package Binder is
       for Default_Switches ("Ada") use
-      |
+        |
 
    package Compiler is
       for Default_Switches ("Ada") use ("-g");
@@ -421,7 +421,7 @@ project Hello_World is
 =-=
 project Hello_World is
 end
-   |
+  |
 =-=-=
 
 Name: Anchor "end" to package
@@ -434,7 +434,7 @@ project Hello_World is
 project Hello_World is
    package Compiler is
    end
-      |
+     |
 =-=-=
 
 Name: Anchor "end" to case
@@ -449,5 +449,5 @@ project Hello_World is
    package Compiler is
       case Build is
       end
-         |
+        |
 =-=-=
