@@ -1280,6 +1280,8 @@ the name of the branch given the branch node."
        (cons name index)))
    gpr-ts-mode-imenu-categories))
 
+(require 'gpr-ts-casing)
+
 ;;;###autoload
 (define-derived-mode gpr-ts-mode prog-mode "GNAT Project"
   "Major mode for editing GNAT Project files, powered by tree-sitter."
@@ -1391,7 +1393,8 @@ the name of the branch given the branch node."
    :topic 'symbol
    :mode '(emacs-lisp-mode . "gpr")
    :regexp "\\bgpr-ts-[^][()`'‘’,\" \t\n]+"
-   :doc-spec '(("(gpr-ts-mode)Variable Index" nil "^ -+ .*: " "\\( \\|$\\)"))))
+   :doc-spec '(("(gpr-ts-mode)Command Index" nil "^ -+ .*: " "\\( \\|$\\)")
+               ("(gpr-ts-mode)Variable Index" nil "^ -+ .*: " "\\( \\|$\\)"))))
 
 (provide 'gpr-ts-mode)
 
