@@ -33,7 +33,7 @@
 
 (defcustom gpr-ts-mode-case-formatting
   '((identifier :formatter capitalize
-                :dictionary ("ALI" "CWE" "DSA" "GCC" "GNATtest"
+                :dictionary ("ALI" "CWE" "DSA" "GCC" "GNATstub" "GNATtest"
                              "HTML" "IDE" "PIC" "QGen" "URL" "VCS"))
     (keyword    :formatter downcase))
   "Case formatting rules for casing commands and modes.

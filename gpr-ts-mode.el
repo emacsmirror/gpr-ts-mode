@@ -163,10 +163,19 @@ specified.  See `treesit-language-source-alist' for full details."
   :package-version "0.5.0")
 
 (defcustom gpr-ts-mode-package-names
-  '("binder" "builder" "check" "clean" "compiler" "cross_reference"
-    "documentation" "eliminate" "finder" "format" "gnatls" "gnatstub"
-    "ide" "install" "linker" "metrics" "naming" "pretty_printer"
-    "remote" "stack" "synchronize")
+  '(;; Intrinsic
+    "Binder" "Builder" "Clean" "Compiler" "Gnatls"
+    "Install" "Linker" "Naming" "Remote"
+    ;; IDE related
+    "IDE" "Ant" "Make"
+    ;; Extra tools
+    "Analyzer" "Check" "Codepeer" "Coverage" "DSA"
+    "Documentation" "Emulator" "GNATtest" "Format"
+    "Metrics" "Pretty_Printer" "Prove" "QGen"
+    "Stack" "Stub"
+    ;; Legacy
+    "Cross_Reference" "Eliminate" "Finder"
+    "GNATstub" "Synchronize")
   "List of known package names."
   :type '(repeat string)
   :group 'gpr-ts
@@ -950,9 +959,10 @@ Return nil if no child of that type is found."
 
 (defun gpr-ts-mode--package-name-p (node)
   "Check if NODE identifier matches a known package name."
-  (let ((identifier (downcase (treesit-node-text node t)))
-        (packages (mapcar #'downcase gpr-ts-mode-package-names)))
-    (seq-find (apply-partially #'string-equal identifier) packages)))
+  (let ((identifier (treesit-node-text node t)))
+    (seq-find
+     (apply-partially #'string-equal-ignore-case identifier)
+     gpr-ts-mode-package-names)))
 
 (defun gpr-ts-mode--package-declaration-names-match-p (node)
   "Check if names match in package declaration NODE."

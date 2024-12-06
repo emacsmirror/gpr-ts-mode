@@ -354,6 +354,11 @@
      ("Board"
       "Debug_Port"
       "Switches"))
+    ;; GNATmetric
+    ("Metric"
+     :attributes
+     ("Default_Switches"
+      "Switches"))
     ;; GNATpp
     ("Pretty_Printer"
      :attributes
@@ -409,7 +414,35 @@
       ("Indentation_Kind"
        :doc "Indentation kind: spaces | tabs")
       ("Width"
-       :doc "Max line width"))))
+       :doc "Max line width")))
+
+    ;; Legacy
+
+    ;; GNATxref
+    ("Cross_Reference"
+     :attributes
+     ("Default_Switches"
+      "Switches"))
+    ;; GNATelim
+    ("Eliminate"
+     :attributes
+     ("Default_Switches"
+      "Switches"))
+    ;; GNATfind
+    ("Finder"
+     :attributes
+     ("Default_Switches"
+      "Switches"))
+    ;; GNATstub
+    ("GNATstub"
+     :attributes
+     ("Default_Switches"
+      "Switches"))
+    ;; GNATsync
+    ("Synchronize"
+     :attributes
+     ("Default_Switches"
+      "Switches")))
   "Completion definitions.
 
 Each definition should be of the form (PACKAGE-NAME . PROPS), where
