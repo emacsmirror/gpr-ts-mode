@@ -360,7 +360,7 @@ inserted."
 (define-minor-mode gpr-ts-auto-case-mode
   "Minor mode for auto-casing in GNAT Project buffers."
   :group 'gpr-ts
-  :lighter "GPR/c"
+  :lighter " GPR/c"
   :interactive (gpr-ts-mode))
 
 (provide 'gpr-ts-casing)
