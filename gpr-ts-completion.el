@@ -355,7 +355,7 @@
       "Debug_Port"
       "Switches"))
     ;; GNATmetric
-    ("Metric"
+    ("Metrics"
      :attributes
      ("Default_Switches"
       "Switches"))
