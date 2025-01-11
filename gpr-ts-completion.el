@@ -43,7 +43,7 @@
   :type '(repeat symbol)
   :group 'gpr-ts
   :link '(custom-manual :tag "Completion" "(gpr-ts-mode)Completion")
-  :package-version "0.7.0")
+  :package-version '(gpr-ts-mode . "0.7.0"))
 
 (defcustom gpr-ts-mode-completion-definitions
   `(
@@ -480,7 +480,7 @@ The following keywords are meaningful:
                 :value-type plist)
   :group 'gpr-ts
   :link '(custom-manual :tag "Completion" "(gpr-ts-mode)Completion")
-  :package-version "0.7.0")
+  :package-version '(gpr-ts-mode "0.7.0"))
 
 (defun gpr-ts-mode--compound-name (node)
   "Find name associated with compound NODE or node text if no name exists."

@@ -4,7 +4,7 @@
 
 ;; Author: Troy Brown <brownts@troybrown.dev>
 ;; Created: February 2023
-;; Version: 0.7.2
+;; Version: 0.7.3
 ;; Keywords: gpr gnat ada languages tree-sitter
 ;; URL: https://github.com/brownts/gpr-ts-mode
 ;; Package-Requires: ((emacs "29.1"))
@@ -78,7 +78,7 @@
                          (const :tag "With Clause" with-clause)))
   :group 'gpr-ts
   :link '(custom-manual :tag "Imenu" "(gpr-ts-mode)Imenu")
-  :package-version "0.6.0")
+  :package-version '(gpr-ts-mode . "0.6.0"))
 
 (defcustom gpr-ts-mode-imenu-category-name-alist
   '((attribute        . "Attribute")
@@ -94,14 +94,14 @@
                 :value-type (string :tag "Category Name"))
   :group 'gpr-ts
   :link '(custom-manual :tag "Imenu" "(gpr-ts-mode)Imenu")
-  :package-version "0.6.0")
+  :package-version '(gpr-ts-mode . "0.6.0"))
 
 (defcustom gpr-ts-mode-indent-offset 3
   "Indentation of statements."
   :type 'integer
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
-  :package-version "0.5.0")
+  :package-version '(gpr-ts-mode . "0.5.0"))
 ;;;###autoload(put 'gpr-ts-mode-indent-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-indent-when-offset gpr-ts-mode-indent-offset
@@ -109,7 +109,7 @@
   :type 'integer
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
-  :package-version "0.5.0")
+  :package-version '(gpr-ts-mode . "0.5.0"))
 ;;;###autoload(put 'gpr-ts-mode-indent-when-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-indent-broken-offset (- gpr-ts-mode-indent-offset 1)
@@ -117,7 +117,7 @@
   :type 'integer
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
-  :package-version "0.5.0")
+  :package-version '(gpr-ts-mode . "0.5.0"))
 ;;;###autoload(put 'gpr-ts-mode-indent-broken-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-indent-exp-item-offset (- gpr-ts-mode-indent-offset 1)
@@ -125,7 +125,7 @@
   :type 'integer
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
-  :package-version "0.5.0")
+  :package-version '(gpr-ts-mode . "0.5.0"))
 ;;;###autoload(put 'gpr-ts-mode-indent-exp-item-offset 'safe-local-variable #'integerp)
 
 (defcustom gpr-ts-mode-indent-strategy 'declaration
@@ -135,7 +135,7 @@
                  (const :tag "Line" line))
   :group 'gpr-ts
   :link '(custom-manual :tag "Indentation" "(gpr-ts-mode)Indentation")
-  :package-version "0.6.0")
+  :package-version '(gpr-ts-mode . "0.6.0"))
 
 (defcustom gpr-ts-mode-grammar "https://github.com/brownts/tree-sitter-gpr"
   "Configuration for downloading and installing the tree-sitter language grammar.
@@ -151,7 +151,7 @@ specified.  See `treesit-language-source-alist' for full details."
                        (choice :tag "C++ Compiler" (const :tag "Default" nil) string)))
   :group 'gpr-ts
   :link '(custom-manual :tag "Grammar Installation" "(gpr-ts-mode)Grammar Installation")
-  :package-version "0.5.0")
+  :package-version '(gpr-ts-mode . "0.5.0"))
 
 (defcustom gpr-ts-mode-grammar-install 'prompt
   "Configuration for installation of tree-sitter language grammar library."
@@ -160,7 +160,7 @@ specified.  See `treesit-language-source-alist' for full details."
                  (const :tag "Do not install" nil))
   :group 'gpr-ts
   :link '(custom-manual :tag "Grammar Installation" "(gpr-ts-mode)Grammar Installation")
-  :package-version "0.5.0")
+  :package-version '(gpr-ts-mode . "0.5.0"))
 
 (defcustom gpr-ts-mode-package-names
   '(;; Intrinsic
@@ -180,7 +180,7 @@ specified.  See `treesit-language-source-alist' for full details."
   :type '(repeat string)
   :group 'gpr-ts
   :link '(custom-manual :tag "Syntax Highlighting" "(gpr-ts-mode)Syntax Highlighting")
-  :package-version "0.6.0")
+  :package-version '(gpr-ts-mode . "0.6.0"))
 ;;;###autoload(put 'gpr-ts-mode-package-names 'safe-local-variable #'list-of-strings-p)
 
 (defvar gpr-ts-mode-syntax-table

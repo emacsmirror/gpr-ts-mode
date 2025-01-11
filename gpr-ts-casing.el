@@ -75,7 +75,7 @@ The following keywords are meaningful:
              (repeat :tag "Words" (string :tag "Word"))))))
   :group 'gpr-ts
   :link '(custom-manual :tag "Casing" "(gpr-ts-mode)Casing")
-  :package-version "0.7.0")
+  :package-version '(gpr-ts-mode . "0.7.0"))
 
 (defun gpr-ts-mode--case-format-word (beg end formatter &optional dictionary)
   "Apply case formatting to word bounded by BEG and END using FORMATTER.
